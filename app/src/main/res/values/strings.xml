@@ -1,3 +1,39 @@
 <resources>
-    <string name="app_name">ark-retouch</string>
+    <string name="app_name">ARK-Retouch</string>
+
+    <!-- Editor -->
+    <string name="editor">Editor</string>
+    <string name="rotate">Rotate</string>
+    <string name="invalid_image_path">Invalid image path</string>
+    <string name="invalid_video_path">Invalid video path</string>
+    <string name="image_editing_failed">Image editing failed</string>
+    <string name="video_editing_failed">Video editing failed</string>
+    <string name="image_editing_cancelled">Image editing cancelled</string>
+    <string name="video_editing_cancelled">Video editing cancelled</string>
+    <string name="file_edited_successfully">File edited successfully</string>
+    <string name="image_edited_successfully">Image edited successfully</string>
+    <string name="video_edited_successfully">Video edited successfully</string>
+    <string name="edit_image_with">Edit image with:</string>
+    <string name="edit_video_with">Edit video with:</string>
+    <string name="no_image_editor_found">No image editor found</string>
+    <string name="no_video_editor_found">No video editor found</string>
+    <string name="unknown_file_location">Unknown file location</string>
+    <string name="error_saving_file">Could not overwrite the source file</string>
+    <string name="rotate_left">Rotate left</string>
+    <string name="rotate_right">Rotate right</string>
+    <string name="rotate_one_eighty">Rotate by 180º</string>
+    <string name="flip">Flip</string>
+    <string name="flip_horizontally">Flip horizontally</string>
+    <string name="flip_vertically">Flip vertically</string>
+    <string name="free_aspect_ratio">Free</string>                  <!-- available as an option: 1:1, 4:3, 16:9, free -->
+    <string name="other_aspect_ratio">Other</string>                <!-- available as an option: 1:1, 4:3, 16:9, free, other -->
+
+    <!-- Resizing -->
+    <string name="resize">Resize</string>
+    <string name="resize_and_save">Resize selection and save</string>
+    <string name="width">Width</string>
+    <string name="height">Height</string>
+    <string name="keep_aspect_ratio">Keep aspect ratio</string>
+    <string name="invalid_values">Please enter a valid resolution</string>
+
 </resources>
