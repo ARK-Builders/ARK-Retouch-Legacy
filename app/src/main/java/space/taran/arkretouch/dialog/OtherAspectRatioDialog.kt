@@ -1,9 +1,10 @@
-package space.taran.arkretouch
+package space.taran.arkretouch.dialog
 
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
 import com.simplemobiletools.commons.extensions.setupDialogStuff
 import kotlinx.android.synthetic.main.dialog_other_aspect_ratio.view.*
+import space.taran.arkretouch.R
 
 class OtherAspectRatioDialog(val activity: Activity, val lastOtherAspectRatio: Pair<Float, Float>?, val callback: (aspectRatio: Pair<Float, Float>) -> Unit) {
     private val dialog: AlertDialog

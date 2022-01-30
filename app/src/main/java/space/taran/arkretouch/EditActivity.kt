@@ -42,6 +42,13 @@ import kotlinx.android.synthetic.main.bottom_editor_actions_filter.*
 import kotlinx.android.synthetic.main.bottom_editor_crop_rotate_actions.*
 import kotlinx.android.synthetic.main.bottom_editor_draw_actions.*
 import kotlinx.android.synthetic.main.bottom_editor_primary_actions.*
+import space.taran.arkretouch.dialog.OtherAspectRatioDialog
+import space.taran.arkretouch.dialog.ResizeDialog
+import space.taran.arkretouch.dialog.SaveAsDialog
+import space.taran.arkretouch.filter.FilterItem
+import space.taran.arkretouch.filter.FilterThumbnailsManager
+import space.taran.arkretouch.filter.FiltersAdapter
+import space.taran.arkretouch.utils.*
 import java.io.*
 
 class EditActivity : AppCompatActivity(), CropImageView.OnCropImageCompleteListener {

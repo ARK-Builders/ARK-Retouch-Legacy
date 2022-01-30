@@ -1,4 +1,4 @@
-package space.taran.arkretouch
+package space.taran.arkretouch.filter
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.editor_filter_item.view.*
+import space.taran.arkretouch.R
 import java.util.*
 
 class FiltersAdapter(val context: Context, val filterItems: ArrayList<FilterItem>, val itemClick: (Int) -> Unit) : RecyclerView.Adapter<FiltersAdapter.ViewHolder>() {

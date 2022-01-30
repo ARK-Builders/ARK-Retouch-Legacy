@@ -1,10 +1,11 @@
-package space.taran.arkretouch
+package space.taran.arkretouch.dialog
 
 import android.app.Activity
 import androidx.appcompat.app.AlertDialog
 import com.simplemobiletools.commons.dialogs.ConfirmationDialog
 import com.simplemobiletools.commons.extensions.*
 import kotlinx.android.synthetic.main.dialog_save_as.view.*
+import space.taran.arkretouch.R
 
 class SaveAsDialog(val activity: Activity, val path: String, val appendFilename: Boolean, val cancelCallback: (() -> Unit)? = null,
                    val callback: (savePath: String) -> Unit) {
