@@ -1,4 +1,4 @@
-package space.taran.arkretouch
+package space.taran.arkretouch.dialog
 
 import android.app.Activity
 import android.widget.EditText
@@ -7,6 +7,7 @@ import com.simplemobiletools.commons.extensions.setupDialogStuff
 import com.simplemobiletools.commons.extensions.showKeyboard
 import com.simplemobiletools.commons.extensions.value
 import kotlinx.android.synthetic.main.dialog_custom_aspect_ratio.view.*
+import space.taran.arkretouch.R
 
 class CustomAspectRatioDialog(val activity: Activity, val defaultCustomAspectRatio: Pair<Float, Float>?, val callback: (aspectRatio: Pair<Float, Float>) -> Unit) {
     init {

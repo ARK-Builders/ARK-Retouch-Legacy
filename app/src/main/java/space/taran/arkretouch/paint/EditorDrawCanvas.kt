@@ -1,4 +1,4 @@
-package space.taran.arkretouch
+package space.taran.arkretouch.paint
 
 import android.content.Context
 import android.graphics.*
@@ -6,6 +6,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.content.ContextCompat
+import space.taran.arkretouch.R
 import java.util.*
 
 class EditorDrawCanvas(context: Context, attrs: AttributeSet) : View(context, attrs) {

@@ -1,4 +1,4 @@
-package space.taran.arkretouch
+package space.taran.arkretouch.utils
 
 import androidx.exifinterface.media.ExifInterface
 import java.lang.reflect.Field

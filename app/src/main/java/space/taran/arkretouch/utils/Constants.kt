@@ -1,4 +1,4 @@
-package space.taran.arkretouch
+package space.taran.arkretouch.utils
 
 import com.simplemobiletools.commons.helpers.MONTH_SECONDS
 

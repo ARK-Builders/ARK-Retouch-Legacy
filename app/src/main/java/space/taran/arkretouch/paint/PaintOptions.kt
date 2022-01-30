@@ -1,4 +1,4 @@
-package space.taran.arkretouch
+package space.taran.arkretouch.paint
 
 import android.graphics.Color
 

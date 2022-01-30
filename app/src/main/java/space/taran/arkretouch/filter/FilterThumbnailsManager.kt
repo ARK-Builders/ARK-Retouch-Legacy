@@ -1,4 +1,4 @@
-package space.taran.arkretouch
+package space.taran.arkretouch.filter
 
 import android.graphics.Bitmap
 import java.util.*

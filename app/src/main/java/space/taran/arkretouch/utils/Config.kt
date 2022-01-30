@@ -1,4 +1,4 @@
-package space.taran.arkretouch
+package space.taran.arkretouch.utils
 
 import android.content.Context
 import android.content.res.Configuration

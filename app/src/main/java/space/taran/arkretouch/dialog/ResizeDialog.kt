@@ -1,4 +1,4 @@
-package space.taran.arkretouch
+package space.taran.arkretouch.dialog
 
 import android.app.Activity
 import android.graphics.Point
@@ -6,6 +6,7 @@ import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import com.simplemobiletools.commons.extensions.*
 import kotlinx.android.synthetic.main.dialog_resize_image.view.*
+import space.taran.arkretouch.R
 
 class ResizeDialog(val activity: Activity, val size: Point, val callback: (newSize: Point) -> Unit) {
     init {
