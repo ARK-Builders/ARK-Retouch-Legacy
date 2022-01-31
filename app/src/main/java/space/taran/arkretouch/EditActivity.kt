@@ -28,9 +28,7 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.simplemobiletools.commons.dialogs.ColorPickerDialog
 import com.simplemobiletools.commons.extensions.*
-import com.simplemobiletools.commons.helpers.REAL_FILE_PATH
-import com.simplemobiletools.commons.helpers.ensureBackgroundThread
-import com.simplemobiletools.commons.helpers.isNougatPlus
+import com.simplemobiletools.commons.helpers.*
 import com.simplemobiletools.commons.models.FileDirItem
 import com.theartofdev.edmodo.cropper.CropImageView
 import com.zomato.photofilters.FilterPack
@@ -121,7 +119,15 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.save_as -> saveImage()
+            R.id.save_as -> {
+                if (!isRPlus()) {
+                    handlePermission(PERMISSION_WRITE_STORAGE) {
+                        saveImage()
+                    }
+                } else {
+                    saveImage()
+                }
+            }
             R.id.edit -> editWith()
             R.id.share -> shareImage()
             else -> return super.onOptionsItemSelected(item)
