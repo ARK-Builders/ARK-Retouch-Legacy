@@ -16,7 +16,6 @@ import android.provider.MediaStore
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.RelativeLayout
-import androidx.appcompat.app.AppCompatActivity
 import androidx.exifinterface.media.ExifInterface
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
@@ -48,10 +47,13 @@ import space.taran.arkretouch.dialog.SaveAsDialog
 import space.taran.arkretouch.filter.FilterItem
 import space.taran.arkretouch.filter.FilterThumbnailsManager
 import space.taran.arkretouch.filter.FiltersAdapter
+import space.taran.arkretouch.internal.BaseActivity
+import space.taran.arkretouch.internal.getFileOutputStream
 import space.taran.arkretouch.utils.*
 import java.io.*
 
-class EditActivity : AppCompatActivity(), CropImageView.OnCropImageCompleteListener {
+class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
+
     companion object {
         init {
             System.loadLibrary("NativeImageProcessor")
@@ -414,20 +416,19 @@ class EditActivity : AppCompatActivity(), CropImageView.OnCropImageCompleteListe
         val filename = applicationContext.getFilenameFromContentUri(saveUri) ?: "tmp.jpg"
         val newPath = "$folder/$filename"
         val fileDirItem = FileDirItem(newPath, filename)
-        // TODO write to file
-//        getFileOutputStream(fileDirItem, true) {
-//            if (it != null) {
-//                try {
-//                    it.write(bytes.toByteArray())
-//                    callback(newPath)
-//                } catch (e: Exception) {
-//                } finally {
-//                    it.close()
-//                }
-//            } else {
-//                callback("")
-//            }
-//        }
+        getFileOutputStream(fileDirItem, true) {
+            if (it != null) {
+                try {
+                    it.write(bytes.toByteArray())
+                    callback(newPath)
+                } catch (e: Exception) {
+                } finally {
+                    it.close()
+                }
+            } else {
+                callback("")
+            }
+        }
     }
 
     private fun shareBitmap(bitmap: Bitmap) {
@@ -866,14 +867,13 @@ class EditActivity : AppCompatActivity(), CropImageView.OnCropImageCompleteListe
             ensureBackgroundThread {
                 val file = File(path)
                 val fileDirItem = FileDirItem(path, path.getFilenameFromPath())
-                // TODO write to file
-//                getFileOutputStream(fileDirItem, true) {
-//                    if (it != null) {
-//                        saveBitmap(file, bitmap, it, showSavingToast)
-//                    } else {
-//                        toast(R.string.image_editing_failed)
-//                    }
-//                }
+                getFileOutputStream(fileDirItem, true) {
+                    if (it != null) {
+                        saveBitmap(file, bitmap, it, showSavingToast)
+                    } else {
+                        toast(R.string.image_editing_failed)
+                    }
+                }
             }
         } catch (e: Exception) {
             showErrorToast(e)
