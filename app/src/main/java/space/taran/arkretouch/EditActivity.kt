@@ -63,6 +63,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     private val ASPECT_X = "aspectX"
     private val ASPECT_Y = "aspectY"
     private val CROP = "crop"
+    private val PATH = "SAVE_FOLDER_PATH"
 
     // constants for bottom primary action groups
     private val PRIMARY_ACTION_NONE = 0
@@ -89,6 +90,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     private var oldExif: ExifInterface? = null
     private var filterInitialBitmap: Bitmap? = null
     private var originalUri: Uri? = null
+    private var savePath: String? = null
 
     private val selectImageFromGalleryResult =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
@@ -98,6 +100,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit)
+        savePath = intent?.getStringExtra(PATH)
         intent.data?.let { initEditActivity(it) }
     }
 
@@ -337,19 +340,19 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         } else if (editor_draw_canvas.isVisible()) {
             val bitmap = editor_draw_canvas.getBitmap()
             if (saveUri.scheme == "file") {
-                SaveAsDialog(this, saveUri.path!!, true) {
+                SaveAsDialog(this, savePath, saveUri.path!!, true) {
                     saveBitmapToFile(bitmap, it, true)
                 }
             } else if (saveUri.scheme == "content") {
                 val filePathGetter = getNewFilePath()
-                SaveAsDialog(this, filePathGetter.first, filePathGetter.second) {
+                SaveAsDialog(this, savePath, filePathGetter.first, filePathGetter.second) {
                     saveBitmapToFile(bitmap, it, true)
                 }
             }
         } else {
             val currentFilter = getFiltersAdapter()?.getCurrentFilter() ?: return
             val filePathGetter = getNewFilePath()
-            SaveAsDialog(this, filePathGetter.first, filePathGetter.second) {
+            SaveAsDialog(this, savePath, filePathGetter.first, filePathGetter.second) {
                 toast(R.string.saving)
 
                 // clean up everything to free as much memory as possible
@@ -828,12 +831,12 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                     finish()
                 }
             } else if (saveUri.scheme == "file") {
-                SaveAsDialog(this, saveUri.path!!, true) {
+                SaveAsDialog(this, savePath, saveUri.path!!, true) {
                     saveBitmapToFile(bitmap, it, true)
                 }
             } else if (saveUri.scheme == "content") {
                 val filePathGetter = getNewFilePath()
-                SaveAsDialog(this, filePathGetter.first, filePathGetter.second) {
+                SaveAsDialog(this, savePath, filePathGetter.first, filePathGetter.second) {
                     saveBitmapToFile(bitmap, it, true)
                 }
             } else {

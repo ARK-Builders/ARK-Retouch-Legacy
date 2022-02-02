@@ -9,6 +9,7 @@ import space.taran.arkretouch.internal.BaseActivity
 
 class SaveAsDialog(
     val activity: BaseActivity,
+    val folderPath: String?,
     val path: String,
     val appendFilename: Boolean,
     val cancelCallback: (() -> Unit)? = null,
@@ -18,7 +19,7 @@ class SaveAsDialog(
     private var filenameSuffix: String = if (appendFilename) "_1" else ""
 
     init {
-        var realPath = path.getParentPath()
+        var realPath = folderPath ?: path.getParentPath()
 
         val view = activity.layoutInflater.inflate(R.layout.dialog_save_as, null).apply {
             save_as_path.text = "${activity.humanizePath(realPath).trimEnd('/')}/"
