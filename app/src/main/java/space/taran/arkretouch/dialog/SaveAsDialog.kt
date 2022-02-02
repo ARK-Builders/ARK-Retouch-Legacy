@@ -1,14 +1,19 @@
 package space.taran.arkretouch.dialog
 
-import android.app.Activity
 import androidx.appcompat.app.AlertDialog
 import com.simplemobiletools.commons.dialogs.ConfirmationDialog
 import com.simplemobiletools.commons.extensions.*
 import kotlinx.android.synthetic.main.dialog_save_as.view.*
 import space.taran.arkretouch.R
+import space.taran.arkretouch.internal.BaseActivity
 
-class SaveAsDialog(val activity: Activity, val path: String, val appendFilename: Boolean, val cancelCallback: (() -> Unit)? = null,
-                   val callback: (savePath: String) -> Unit) {
+class SaveAsDialog(
+    val activity: BaseActivity,
+    val path: String,
+    val appendFilename: Boolean,
+    val cancelCallback: (() -> Unit)? = null,
+    val callback: (savePath: String) -> Unit
+) {
 
     init {
         var realPath = path.getParentPath()
@@ -33,54 +38,56 @@ class SaveAsDialog(val activity: Activity, val path: String, val appendFilename:
             save_as_name.setText(name)
             save_as_path.setOnClickListener {
                 activity.hideKeyboard(save_as_path)
-                // TODO customize saving
-//                FilePickerDialog(activity, realPath, false, false, true, true) {
-//                    save_as_path.text = activity.humanizePath(it)
-//                    realPath = it
-//                }
+                FilePickerDialog(activity, realPath, false, false, true, false) {
+                    save_as_path.text = activity.humanizePath(it)
+                    realPath = it
+                }
             }
         }
 
         AlertDialog.Builder(activity)
-                .setPositiveButton(R.string.ok, null)
-                .setNegativeButton(R.string.cancel) { dialog, which -> cancelCallback?.invoke() }
-                .setOnCancelListener { cancelCallback?.invoke() }
-                .create().apply {
-                    activity.setupDialogStuff(view, this, R.string.save_as) {
-                        showKeyboard(view.save_as_name)
-                        getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                            val filename = view.save_as_name.value
-                            val extension = view.save_as_extension.value
+            .setPositiveButton(R.string.ok, null)
+            .setNegativeButton(R.string.cancel) { dialog, which -> cancelCallback?.invoke() }
+            .setOnCancelListener { cancelCallback?.invoke() }
+            .create().apply {
+                activity.setupDialogStuff(view, this, R.string.save_as) {
+                    showKeyboard(view.save_as_name)
+                    getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        val filename = view.save_as_name.value
+                        val extension = view.save_as_extension.value
 
-                            if (filename.isEmpty()) {
-                                activity.toast(R.string.filename_cannot_be_empty)
-                                return@setOnClickListener
-                            }
+                        if (filename.isEmpty()) {
+                            activity.toast(R.string.filename_cannot_be_empty)
+                            return@setOnClickListener
+                        }
 
-                            if (extension.isEmpty()) {
-                                activity.toast(R.string.extension_cannot_be_empty)
-                                return@setOnClickListener
-                            }
+                        if (extension.isEmpty()) {
+                            activity.toast(R.string.extension_cannot_be_empty)
+                            return@setOnClickListener
+                        }
 
-                            val newFilename = "$filename.$extension"
-                            val newPath = "${realPath.trimEnd('/')}/$newFilename"
-                            if (!newFilename.isAValidFilename()) {
-                                activity.toast(R.string.filename_invalid_characters)
-                                return@setOnClickListener
-                            }
+                        val newFilename = "$filename.$extension"
+                        val newPath = "${realPath.trimEnd('/')}/$newFilename"
+                        if (!newFilename.isAValidFilename()) {
+                            activity.toast(R.string.filename_invalid_characters)
+                            return@setOnClickListener
+                        }
 
-                            if (activity.getDoesFilePathExist(newPath)) {
-                                val title = String.format(activity.getString(R.string.file_already_exists_overwrite), newFilename)
-                                ConfirmationDialog(activity, title) {
-                                    callback(newPath)
-                                    dismiss()
-                                }
-                            } else {
+                        if (activity.getDoesFilePathExist(newPath)) {
+                            val title = String.format(
+                                activity.getString(R.string.file_already_exists_overwrite),
+                                newFilename
+                            )
+                            ConfirmationDialog(activity, title) {
                                 callback(newPath)
                                 dismiss()
                             }
+                        } else {
+                            callback(newPath)
+                            dismiss()
                         }
                     }
                 }
+            }
     }
 }

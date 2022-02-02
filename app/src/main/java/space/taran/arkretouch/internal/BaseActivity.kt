@@ -6,6 +6,8 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.simplemobiletools.commons.activities.BaseSimpleActivity
+import com.simplemobiletools.commons.dialogs.WritePermissionDialog
 import com.simplemobiletools.commons.extensions.*
 import com.simplemobiletools.commons.helpers.*
 import space.taran.arkretouch.R
@@ -40,6 +42,44 @@ open class BaseActivity: AppCompatActivity() {
         } else {
             callback(true)
             false
+        }
+    }
+
+    fun handleAndroidSAFDialog(path: String, callback: (success: Boolean) -> Unit): Boolean {
+        return if (!packageName.startsWith("space.taran")) {
+            callback(true)
+            false
+        } else if (isShowingAndroidSAFDialog(path)) {
+            BaseSimpleActivity.funAfterSAFPermission = callback
+            true
+        } else {
+            callback(true)
+            false
+        }
+    }
+
+    fun handleOTGPermission(callback: (success: Boolean) -> Unit) {
+        if (baseConfig.OTGTreeUri.isNotEmpty()) {
+            callback(true)
+            return
+        }
+
+        BaseSimpleActivity.funAfterSAFPermission = callback
+        WritePermissionDialog(this, true) {
+            Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+                try {
+                    startActivityForResult(this, OPEN_DOCUMENT_TREE_OTG)
+                    return@apply
+                } catch (e: Exception) {
+                    type = "*/*"
+                }
+
+                try {
+                    startActivityForResult(this, OPEN_DOCUMENT_TREE_OTG)
+                } catch (e: Exception) {
+                    toast(R.string.unknown_error_occurred)
+                }
+            }
         }
     }
 
