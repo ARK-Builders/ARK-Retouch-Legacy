@@ -15,6 +15,8 @@ class SaveAsDialog(
     val callback: (savePath: String) -> Unit
 ) {
 
+    private var filenameSuffix: String = if (appendFilename) "_1" else ""
+
     init {
         var realPath = path.getParentPath()
 
@@ -31,11 +33,12 @@ class SaveAsDialog(
                 save_as_extension.setText(extension)
             }
 
-            if (appendFilename) {
-                name += "_1"
+            overwrite.setOnCheckedChangeListener { _, isChecked ->
+                filenameSuffix = if (isChecked) "" else "_1"
+                save_as_name.setText(name + filenameSuffix)
             }
 
-            save_as_name.setText(name)
+            save_as_name.setText(name + filenameSuffix)
             save_as_path.setOnClickListener {
                 activity.hideKeyboard(save_as_path)
                 FilePickerDialog(activity, realPath, false, false, true, false) {
@@ -73,7 +76,7 @@ class SaveAsDialog(
                             return@setOnClickListener
                         }
 
-                        if (activity.getDoesFilePathExist(newPath)) {
+                        if (activity.getDoesFilePathExist(newPath) && !view.overwrite.isChecked) {
                             val title = String.format(
                                 activity.getString(R.string.file_already_exists_overwrite),
                                 newFilename
