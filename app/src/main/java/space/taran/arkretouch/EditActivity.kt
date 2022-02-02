@@ -16,6 +16,7 @@ import android.provider.MediaStore
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.RelativeLayout
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.exifinterface.media.ExifInterface
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
@@ -89,10 +90,15 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     private var filterInitialBitmap: Bitmap? = null
     private var originalUri: Uri? = null
 
+    private val selectImageFromGalleryResult =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let { initEditActivity(it) }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit)
-        initEditActivity()
+        intent.data?.let { initEditActivity(it) }
     }
 
     override fun onResume() {
@@ -119,6 +125,9 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            R.id.open -> {
+                selectImageFromGalleryResult.launch("image/*")
+            }
             R.id.save_as -> {
                 if (!isRPlus()) {
                     handlePermission(PERMISSION_WRITE_STORAGE) {
@@ -135,12 +144,8 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         return true
     }
 
-    private fun initEditActivity() {
-        if (intent.data == null) {
-            return
-        }
-
-        uri = intent.data!!
+    private fun initEditActivity(imageUri: Uri) {
+        uri = imageUri
         originalUri = uri
         if (uri!!.scheme != "file" && uri!!.scheme != "content") {
             toast(R.string.unknown_file_location)
