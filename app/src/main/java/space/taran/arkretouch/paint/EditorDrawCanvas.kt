@@ -5,9 +5,9 @@ import android.graphics.*
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat
 import space.taran.arkretouch.R
-import java.util.*
 
 class EditorDrawCanvas(context: Context, attrs: AttributeSet) : View(context, attrs) {
     private var mCurX = 0f
@@ -125,6 +125,14 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) : View(context, at
     fun updateBackgroundBitmap(bitmap: Bitmap) {
         backgroundBitmap = bitmap
         invalidate()
+    }
+
+    fun clear() {
+        mPaths.clear()
+        backgroundBitmap?.eraseColor(Color.WHITE)
+        layoutParams.width = RelativeLayout.LayoutParams.MATCH_PARENT
+        layoutParams.height = RelativeLayout.LayoutParams.MATCH_PARENT
+        requestLayout()
     }
 
     fun getBitmap(): Bitmap {

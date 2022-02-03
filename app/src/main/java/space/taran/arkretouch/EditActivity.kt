@@ -181,6 +181,10 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
             )
         }
 
+        wasDrawCanvasPositioned = false
+        currPrimaryAction = PRIMARY_ACTION_NONE
+        editor_draw_canvas.clear()
+        updatePrimaryActionButtons()
         loadDefaultImageView()
         setupBottomActions()
 
@@ -390,11 +394,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
             when {
                 default_image_view.isVisible() -> {
                     val currentFilter = getFiltersAdapter()?.getCurrentFilter()
-                    if (currentFilter == null) {
-                        toast(R.string.unknown_error_occurred)
-                        return@ensureBackgroundThread
-                    }
-
+                        ?: return@ensureBackgroundThread
                     val originalBitmap = Glide.with(applicationContext).asBitmap().load(uri)
                         .submit(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL).get()
                     currentFilter.filter.processFilter(originalBitmap)
