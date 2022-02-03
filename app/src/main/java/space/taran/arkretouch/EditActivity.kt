@@ -98,6 +98,8 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit)
+        setupPrimaryActionButtons()
+        setupDrawButtons()
         savePath = intent?.getStringExtra(PATH)
         intent.data?.let { initEditActivity(it) }
     }
@@ -290,7 +292,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         crop_image_view.beGone()
         editor_draw_canvas.beVisible()
 
-        if (!wasDrawCanvasPositioned) {
+        if (!wasDrawCanvasPositioned && uri != null) {
             wasDrawCanvasPositioned = true
             editor_draw_canvas.onGlobalLayout {
                 ensureBackgroundThread {
@@ -339,6 +341,9 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
             crop_image_view.getCroppedImageAsync()
         } else if (editor_draw_canvas.isVisible()) {
             val bitmap = editor_draw_canvas.getBitmap()
+            if (!::saveUri.isInitialized) {
+                saveUri = Uri.fromFile(File("$internalStoragePath/${getCurrentFormattedDateTime()}.jpg"))
+            }
             if (saveUri.scheme == "file") {
                 SaveAsDialog(this, savePath, saveUri.path!!, true) {
                     saveBitmapToFile(bitmap, it, true)
@@ -462,10 +467,12 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
 
     private fun setupPrimaryActionButtons() {
         bottom_primary_filter.setOnClickListener {
+            if (uri == null) return@setOnClickListener
             bottomFilterClicked()
         }
 
         bottom_primary_crop_rotate.setOnClickListener {
+            if (uri == null) return@setOnClickListener
             bottomCropRotateClicked()
         }
 
