@@ -16,7 +16,6 @@ import android.provider.MediaStore
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.RelativeLayout
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.exifinterface.media.ExifInterface
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
@@ -29,7 +28,10 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.simplemobiletools.commons.dialogs.ColorPickerDialog
 import com.simplemobiletools.commons.extensions.*
-import com.simplemobiletools.commons.helpers.*
+import com.simplemobiletools.commons.helpers.PERMISSION_WRITE_STORAGE
+import com.simplemobiletools.commons.helpers.REAL_FILE_PATH
+import com.simplemobiletools.commons.helpers.ensureBackgroundThread
+import com.simplemobiletools.commons.helpers.isNougatPlus
 import com.simplemobiletools.commons.models.FileDirItem
 import com.theartofdev.edmodo.cropper.CropImageView
 import com.zomato.photofilters.FilterPack
@@ -40,6 +42,7 @@ import kotlinx.android.synthetic.main.bottom_editor_actions_filter.*
 import kotlinx.android.synthetic.main.bottom_editor_crop_rotate_actions.*
 import kotlinx.android.synthetic.main.bottom_editor_draw_actions.*
 import kotlinx.android.synthetic.main.bottom_editor_primary_actions.*
+import space.taran.arkretouch.dialog.FilePickerDialog
 import space.taran.arkretouch.dialog.OtherAspectRatioDialog
 import space.taran.arkretouch.dialog.ResizeDialog
 import space.taran.arkretouch.dialog.SaveAsDialog
@@ -92,11 +95,6 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     private var originalUri: Uri? = null
     private var savePath: String? = null
 
-    private val selectImageFromGalleryResult =
-        registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-            uri?.let { initEditActivity(it) }
-        }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_edit)
@@ -129,14 +127,12 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.open -> {
-                selectImageFromGalleryResult.launch("image/*")
+                FilePickerDialog(this) {
+                    initEditActivity(Uri.fromFile(File(it)))
+                }
             }
             R.id.save_as -> {
-                if (!isRPlus()) {
-                    handlePermission(PERMISSION_WRITE_STORAGE) {
-                        saveImage()
-                    }
-                } else {
+                handlePermission(PERMISSION_WRITE_STORAGE) {
                     saveImage()
                 }
             }
