@@ -427,7 +427,9 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                 return
             }
         }
-
+        if (!::saveUri.isInitialized) {
+            saveUri = Uri.fromFile(File("$internalStoragePath/${getCurrentFormattedDateTime()}.jpg"))
+        }
         val filename = applicationContext.getFilenameFromContentUri(saveUri) ?: "tmp.jpg"
         val newPath = "$folder/$filename"
         val fileDirItem = FileDirItem(newPath, filename)
