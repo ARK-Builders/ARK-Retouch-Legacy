@@ -27,7 +27,30 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.simplemobiletools.commons.dialogs.ColorPickerDialog
-import com.simplemobiletools.commons.extensions.*
+import com.simplemobiletools.commons.extensions.applyColorFilter
+import com.simplemobiletools.commons.extensions.beGone
+import com.simplemobiletools.commons.extensions.beGoneIf
+import com.simplemobiletools.commons.extensions.beVisible
+import com.simplemobiletools.commons.extensions.beVisibleIf
+import com.simplemobiletools.commons.extensions.getAdjustedPrimaryColor
+import com.simplemobiletools.commons.extensions.getCompressionFormat
+import com.simplemobiletools.commons.extensions.getCurrentFormattedDateTime
+import com.simplemobiletools.commons.extensions.getFilenameExtension
+import com.simplemobiletools.commons.extensions.getFilenameFromContentUri
+import com.simplemobiletools.commons.extensions.getFilenameFromPath
+import com.simplemobiletools.commons.extensions.getParentPath
+import com.simplemobiletools.commons.extensions.getRealPathFromURI
+import com.simplemobiletools.commons.extensions.internalStoragePath
+import com.simplemobiletools.commons.extensions.isGone
+import com.simplemobiletools.commons.extensions.isPathOnOTG
+import com.simplemobiletools.commons.extensions.isVisible
+import com.simplemobiletools.commons.extensions.onGlobalLayout
+import com.simplemobiletools.commons.extensions.onSeekBarChangeListener
+import com.simplemobiletools.commons.extensions.openEditorIntent
+import com.simplemobiletools.commons.extensions.rescanPath
+import com.simplemobiletools.commons.extensions.sharePathIntent
+import com.simplemobiletools.commons.extensions.showErrorToast
+import com.simplemobiletools.commons.extensions.toast
 import com.simplemobiletools.commons.helpers.PERMISSION_WRITE_STORAGE
 import com.simplemobiletools.commons.helpers.REAL_FILE_PATH
 import com.simplemobiletools.commons.helpers.ensureBackgroundThread
@@ -51,8 +74,18 @@ import space.taran.arkretouch.filter.FilterThumbnailsManager
 import space.taran.arkretouch.filter.FiltersAdapter
 import space.taran.arkretouch.internal.BaseActivity
 import space.taran.arkretouch.internal.getFileOutputStream
-import space.taran.arkretouch.utils.*
-import java.io.*
+import space.taran.arkretouch.utils.ASPECT_RATIO_FOUR_THREE
+import space.taran.arkretouch.utils.ASPECT_RATIO_FREE
+import space.taran.arkretouch.utils.ASPECT_RATIO_ONE_ONE
+import space.taran.arkretouch.utils.ASPECT_RATIO_OTHER
+import space.taran.arkretouch.utils.ASPECT_RATIO_SIXTEEN_NINE
+import space.taran.arkretouch.utils.Config
+import space.taran.arkretouch.utils.copyNonDimensionAttributesTo
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.InputStream
+import java.io.OutputStream
 
 class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
 
@@ -66,7 +99,10 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     private val ASPECT_X = "aspectX"
     private val ASPECT_Y = "aspectY"
     private val CROP = "crop"
+
     private val PATH = "SAVE_FOLDER_PATH"
+    private val RESULT_ORIGINAL_URI = "RESULT_ORIGINAL_URI"
+    private val RESULT_SAVE_URI = "RESULT_SAVE_URI"
 
     // constants for bottom primary action groups
     private val PRIMARY_ACTION_NONE = 0
@@ -927,9 +963,8 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         } catch (e: Exception) {
         }
 
-        setResult(Activity.RESULT_OK, intent)
-        scanFinalPath(file.absolutePath)
         out.close()
+        scanFinalPath(file.absolutePath)
     }
 
     private fun editWith() {
@@ -938,11 +973,13 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     }
 
     private fun scanFinalPath(path: String) {
-        val paths = arrayListOf(path)
-        rescanPaths(paths) {
-//            fixDateTaken(paths, false)
-            setResult(Activity.RESULT_OK, intent)
+        rescanPath(path) {
             toast(R.string.file_saved)
+            val result = Intent(intent).apply {
+                putExtra(RESULT_ORIGINAL_URI, originalUri?.toString())
+                putExtra(RESULT_SAVE_URI, Uri.fromFile(File(path)).toString())
+            }
+            setResult(RESULT_OK, result)
             finish()
         }
     }
