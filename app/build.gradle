@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    compileSdk 31
+    compileSdk 32
 
     defaultConfig {
         applicationId "space.taran.arkretouch"
@@ -19,11 +19,31 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-
+    signingConfigs {
+        testRelease {
+            storeFile project.rootProject.file('./testRelease.jks')
+            storePassword "retouch"
+            keyAlias "key0"
+            keyPassword "retouch"
+            v1SigningEnabled true
+            v2SigningEnabled true
+        }
+    }
     buildTypes {
+        debug {
+            manifestPlaceholders = [
+                appIcon : "@mipmap/ic_launcher_1",
+                appLabel: "@string/app_name_debug"
+            ]
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.testRelease
+            manifestPlaceholders = [
+                appIcon : "@mipmap/ic_launcher_2",
+                appLabel: "@string/app_name"
+            ]
         }
     }
     compileOptions {
