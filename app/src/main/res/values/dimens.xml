@@ -51,6 +51,8 @@
     <dimen name="line_color_picker_margin">10dp</dimen>
     <dimen name="list_avatar_size">40dp</dimen>
     <dimen name="medium_margin">8dp</dimen>
+    <dimen name="margin_5">5dp</dimen>
+
     <dimen name="middle_text_size">17sp</dimen>
     <dimen name="min_row_height">60dp</dimen>
     <dimen name="normal_icon_size">48dp</dimen>

@@ -16,7 +16,6 @@ import com.simplemobiletools.commons.extensions.getContrastColor
 import com.simplemobiletools.commons.interfaces.MyActionModeCallback
 import com.simplemobiletools.commons.views.MyRecyclerView
 import space.taran.arkretouch.internal.BaseActivity
-import java.util.*
 
 abstract class MyRecyclerViewAdapter(
     val activity: BaseActivity,
@@ -62,19 +61,28 @@ abstract class MyRecyclerViewAdapter(
 
     init {
         actModeCallback = object : MyActionModeCallback() {
-            override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
+            override fun onActionItemClicked(
+                mode: ActionMode,
+                item: MenuItem
+            ): Boolean {
                 actionItemPressed(item.itemId)
                 return true
             }
 
-            override fun onCreateActionMode(actionMode: ActionMode, menu: Menu?): Boolean {
+            override fun onCreateActionMode(
+                actionMode: ActionMode,
+                menu: Menu?
+            ): Boolean {
                 if (getActionMenuId() == 0) {
                     return true
                 }
 
                 isSelectable = true
                 actMode = actionMode
-                actBarTextView = layoutInflater.inflate(R.layout.actionbar_title, null) as TextView
+                actBarTextView = layoutInflater.inflate(
+                    R.layout.actionbar_title,
+                    null
+                ) as TextView
                 actBarTextView!!.layoutParams = ActionBar.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
@@ -92,7 +100,10 @@ abstract class MyRecyclerViewAdapter(
                 return true
             }
 
-            override fun onPrepareActionMode(actionMode: ActionMode, menu: Menu): Boolean {
+            override fun onPrepareActionMode(
+                actionMode: ActionMode,
+                menu: Menu
+            ): Boolean {
                 prepareActionMode(menu)
                 return true
             }
@@ -115,13 +126,22 @@ abstract class MyRecyclerViewAdapter(
         }
     }
 
-    protected fun toggleItemSelection(select: Boolean, pos: Int, updateTitle: Boolean = true) {
+    protected fun toggleItemSelection(
+        select: Boolean,
+        pos: Int,
+        updateTitle: Boolean = true
+    ) {
         if (select && !getIsItemSelectable(pos)) {
             return
         }
 
         val itemKey = getItemSelectionKey(pos) ?: return
-        if ((select && selectedKeys.contains(itemKey)) || (!select && !selectedKeys.contains(itemKey))) {
+        if ((select && selectedKeys.contains(itemKey)) || (
+            !select && !selectedKeys.contains(
+                    itemKey
+                )
+            )
+        ) {
             return
         }
 
@@ -168,7 +188,8 @@ abstract class MyRecyclerViewAdapter(
         }
     }
 
-    protected fun getSelectedItemPositions(sortDescending: Boolean = true): ArrayList<Int> {
+    protected fun getSelectedItemPositions(sortDescending: Boolean = true):
+        ArrayList<Int> {
         val positions = ArrayList<Int>()
         val keys = selectedKeys.toList()
         keys.forEach {
@@ -224,7 +245,8 @@ abstract class MyRecyclerViewAdapter(
 
     protected fun selectItemRange(from: Int, to: Int, min: Int, max: Int) {
         if (from == to) {
-            (min..max).filter { it != from }.forEach { toggleItemSelection(false, it, true) }
+            (min..max).filter { it != from }
+                .forEach { toggleItemSelection(false, it, true) }
             return
         }
 
@@ -249,7 +271,8 @@ abstract class MyRecyclerViewAdapter(
             }
 
             if (max > -1 && max > to) {
-                (to + 1..max).filter { it != from }.forEach { toggleItemSelection(false, it, true) }
+                (to + 1..max).filter { it != from }
+                    .forEach { toggleItemSelection(false, it, true) }
             }
 
             if (min > -1) {
@@ -339,7 +362,8 @@ abstract class MyRecyclerViewAdapter(
         fun viewClicked(any: Any) {
             if (actModeCallback.isSelectable) {
                 val currentPosition = adapterPosition - positionOffset
-                val isSelected = selectedKeys.contains(getItemSelectionKey(currentPosition))
+                val isSelected =
+                    selectedKeys.contains(getItemSelectionKey(currentPosition))
                 toggleItemSelection(!isSelected, currentPosition, true)
             } else {
                 itemClick.invoke(any)

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/bottom_editor_primary_actions_wrapper"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/bottom_actions_height"
+    android:layout_height="wrap_content"
     android:layout_alignParentBottom="true">
 
     <ImageView
@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/filter"
-        android:padding="@dimen/normal_margin"
+        android:padding="@dimen/margin_5"
         android:src="@drawable/ic_photo_filter_vector"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/bottom_primary_crop_rotate"
@@ -24,7 +24,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:padding="@dimen/normal_margin"
+        android:padding="@dimen/margin_5"
         android:src="@drawable/ic_crop_rotate_vector"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/bottom_primary_draw"
@@ -36,7 +36,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:padding="@dimen/normal_margin"
+        android:padding="@dimen/margin_5"
         android:src="@drawable/ic_draw_vector"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

@@ -21,33 +21,35 @@ class SaveAsDialog(
     init {
         var realPath = folderPath ?: path.getParentPath()
 
-        val view = activity.layoutInflater.inflate(R.layout.dialog_save_as, null).apply {
-            save_as_path.text = "${activity.humanizePath(realPath).trimEnd('/')}/"
+        val view =
+            activity.layoutInflater.inflate(R.layout.dialog_save_as, null).apply {
+                save_as_path.text =
+                    "${activity.humanizePath(realPath).trimEnd('/')}/"
 
-            val fullName = path.getFilenameFromPath()
-            val dotAt = fullName.lastIndexOf(".")
-            var name = fullName
+                val fullName = path.getFilenameFromPath()
+                val dotAt = fullName.lastIndexOf(".")
+                var name = fullName
 
-            if (dotAt > 0) {
-                name = fullName.substring(0, dotAt)
-                val extension = fullName.substring(dotAt + 1)
-                save_as_extension.setText(extension)
-            }
+                if (dotAt > 0) {
+                    name = fullName.substring(0, dotAt)
+                    val extension = fullName.substring(dotAt + 1)
+                    save_as_extension.setText(extension)
+                }
 
-            overwrite.setOnCheckedChangeListener { _, isChecked ->
-                filenameSuffix = if (isChecked) "" else "_1"
+                overwrite.setOnCheckedChangeListener { _, isChecked ->
+                    filenameSuffix = if (isChecked) "" else "_1"
+                    save_as_name.setText(name + filenameSuffix)
+                }
+
                 save_as_name.setText(name + filenameSuffix)
-            }
-
-            save_as_name.setText(name + filenameSuffix)
-            save_as_path.setOnClickListener {
-                activity.hideKeyboard(save_as_path)
-                FilePickerDialog(activity, realPath, false, false, true, false) {
-                    save_as_path.text = activity.humanizePath(it)
-                    realPath = it
+                save_as_path.setOnClickListener {
+                    activity.hideKeyboard(save_as_path)
+                    FilePickerDialog(activity, realPath, false, false, true, false) {
+                        save_as_path.text = activity.humanizePath(it)
+                        realPath = it
+                    }
                 }
             }
-        }
 
         AlertDialog.Builder(activity)
             .setPositiveButton(R.string.ok, null)

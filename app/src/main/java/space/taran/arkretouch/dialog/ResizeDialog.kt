@@ -8,9 +8,14 @@ import com.simplemobiletools.commons.extensions.*
 import kotlinx.android.synthetic.main.dialog_resize_image.view.*
 import space.taran.arkretouch.R
 
-class ResizeDialog(val activity: Activity, val size: Point, val callback: (newSize: Point) -> Unit) {
+class ResizeDialog(
+    val activity: Activity,
+    val size: Point,
+    val callback: (newSize: Point) -> Unit
+) {
     init {
-        val view = activity.layoutInflater.inflate(R.layout.dialog_resize_image, null)
+        val view =
+            activity.layoutInflater.inflate(R.layout.dialog_resize_image, null)
         val widthView = view.image_width
         val heightView = view.image_height
 
@@ -48,25 +53,26 @@ class ResizeDialog(val activity: Activity, val size: Point, val callback: (newSi
         }
 
         AlertDialog.Builder(activity)
-                .setPositiveButton(R.string.ok, null)
-                .setNegativeButton(R.string.cancel, null)
-                .create().apply {
-                    activity.setupDialogStuff(view, this, R.string.resize_and_save) {
-                        showKeyboard(view.image_width)
-                        getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                            val width = getViewValue(widthView)
-                            val height = getViewValue(heightView)
-                            if (width <= 0 || height <= 0) {
-                                activity.toast(R.string.invalid_values)
-                                return@setOnClickListener
-                            }
-
-                            val newSize = Point(getViewValue(widthView), getViewValue(heightView))
-                            callback(newSize)
-                            dismiss()
+            .setPositiveButton(R.string.ok, null)
+            .setNegativeButton(R.string.cancel, null)
+            .create().apply {
+                activity.setupDialogStuff(view, this, R.string.resize_and_save) {
+                    showKeyboard(view.image_width)
+                    getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        val width = getViewValue(widthView)
+                        val height = getViewValue(heightView)
+                        if (width <= 0 || height <= 0) {
+                            activity.toast(R.string.invalid_values)
+                            return@setOnClickListener
                         }
+
+                        val newSize =
+                            Point(getViewValue(widthView), getViewValue(heightView))
+                        callback(newSize)
+                        dismiss()
                     }
                 }
+            }
     }
 
     private fun getViewValue(view: EditText): Int {
