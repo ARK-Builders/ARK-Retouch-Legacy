@@ -25,7 +25,8 @@ private class ExifInterfaceAttributes {
         val AllNonDimensionAttributes = getAllNonDimensionExifAttributes()
 
         private fun getAllNonDimensionExifAttributes(): List<String> {
-            val tagFields = ExifInterface::class.java.fields.filter { field -> isExif(field) }
+            val tagFields =
+                ExifInterface::class.java.fields.filter { field -> isExif(field) }
 
             val excludeAttributes = arrayListOf(
                 ExifInterface.TAG_IMAGE_LENGTH,
@@ -34,7 +35,8 @@ private class ExifInterfaceAttributes {
                 ExifInterface.TAG_PIXEL_Y_DIMENSION,
                 ExifInterface.TAG_THUMBNAIL_IMAGE_LENGTH,
                 ExifInterface.TAG_THUMBNAIL_IMAGE_WIDTH,
-                ExifInterface.TAG_ORIENTATION)
+                ExifInterface.TAG_ORIENTATION
+            )
 
             return tagFields
                 .map { tagField -> tagField.get(null) as String }
@@ -44,11 +46,12 @@ private class ExifInterfaceAttributes {
 
         private fun isExif(field: Field): Boolean {
             return field.type == String::class.java &&
-                    isPublicStaticFinal(field.modifiers) &&
-                    field.name.startsWith("TAG_")
+                isPublicStaticFinal(field.modifiers) &&
+                field.name.startsWith("TAG_")
         }
 
-        private const val publicStaticFinal = Modifier.PUBLIC or Modifier.STATIC or Modifier.FINAL
+        private const val publicStaticFinal =
+            Modifier.PUBLIC or Modifier.STATIC or Modifier.FINAL
 
         private fun isPublicStaticFinal(modifiers: Int): Boolean {
             return modifiers and publicStaticFinal > 0

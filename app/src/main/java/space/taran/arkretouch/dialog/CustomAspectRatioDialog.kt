@@ -9,27 +9,38 @@ import com.simplemobiletools.commons.extensions.value
 import kotlinx.android.synthetic.main.dialog_custom_aspect_ratio.view.*
 import space.taran.arkretouch.R
 
-class CustomAspectRatioDialog(val activity: Activity, val defaultCustomAspectRatio: Pair<Float, Float>?, val callback: (aspectRatio: Pair<Float, Float>) -> Unit) {
+class CustomAspectRatioDialog(
+    val activity: Activity,
+    val defaultCustomAspectRatio: Pair<Float, Float>?,
+    val callback: (aspectRatio: Pair<Float, Float>) -> Unit
+) {
     init {
-        val view = activity.layoutInflater.inflate(R.layout.dialog_custom_aspect_ratio, null).apply {
-            aspect_ratio_width.setText(defaultCustomAspectRatio?.first?.toInt()?.toString() ?: "")
-            aspect_ratio_height.setText(defaultCustomAspectRatio?.second?.toInt()?.toString() ?: "")
+        val view = activity.layoutInflater.inflate(
+            R.layout.dialog_custom_aspect_ratio,
+            null
+        ).apply {
+            aspect_ratio_width.setText(
+                defaultCustomAspectRatio?.first?.toInt()?.toString() ?: ""
+            )
+            aspect_ratio_height.setText(
+                defaultCustomAspectRatio?.second?.toInt()?.toString() ?: ""
+            )
         }
 
         AlertDialog.Builder(activity)
-                .setPositiveButton(R.string.ok, null)
-                .setNegativeButton(R.string.cancel, null)
-                .create().apply {
-                    activity.setupDialogStuff(view, this) {
-                        showKeyboard(view.aspect_ratio_width)
-                        getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                            val width = getViewValue(view.aspect_ratio_width)
-                            val height = getViewValue(view.aspect_ratio_height)
-                            callback(Pair(width, height))
-                            dismiss()
-                        }
+            .setPositiveButton(R.string.ok, null)
+            .setNegativeButton(R.string.cancel, null)
+            .create().apply {
+                activity.setupDialogStuff(view, this) {
+                    showKeyboard(view.aspect_ratio_width)
+                    getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        val width = getViewValue(view.aspect_ratio_width)
+                        val height = getViewValue(view.aspect_ratio_height)
+                        callback(Pair(width, height))
+                        dismiss()
                     }
                 }
+            }
     }
 
     private fun getViewValue(view: EditText): Float {

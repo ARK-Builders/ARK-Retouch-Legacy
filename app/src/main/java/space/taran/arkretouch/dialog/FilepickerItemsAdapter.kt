@@ -14,16 +14,30 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withC
 import com.bumptech.glide.request.RequestOptions
 import com.qtalk.recyclerviewfastscroller.RecyclerViewFastScroller
 import com.simplemobiletools.commons.R
-import com.simplemobiletools.commons.extensions.*
+import com.simplemobiletools.commons.extensions.baseConfig
+import com.simplemobiletools.commons.extensions.formatSize
+import com.simplemobiletools.commons.extensions.getAndroidSAFUri
+import com.simplemobiletools.commons.extensions.getColoredDrawableWithColor
+import com.simplemobiletools.commons.extensions.getOTGPublicPath
+import com.simplemobiletools.commons.extensions.getTextSize
+import com.simplemobiletools.commons.extensions.getTimeFormat
+import com.simplemobiletools.commons.extensions.hasOTGConnected
+import com.simplemobiletools.commons.extensions.isGif
+import com.simplemobiletools.commons.extensions.isPathOnOTG
+import com.simplemobiletools.commons.extensions.isRestrictedSAFOnlyRoot
 import com.simplemobiletools.commons.helpers.getFilePlaceholderDrawables
 import com.simplemobiletools.commons.models.FileDirItem
 import com.simplemobiletools.commons.views.MyRecyclerView
-import kotlinx.android.synthetic.main.item_filepicker_list.view.*
+import java.util.Locale
 import space.taran.arkretouch.internal.BaseActivity
-import java.util.*
+import kotlinx.android.synthetic.main.item_filepicker_list.view.list_item_details
+import kotlinx.android.synthetic.main.item_filepicker_list.view.list_item_icon
+import kotlinx.android.synthetic.main.item_filepicker_list.view.list_item_name
 
 class FilepickerItemsAdapter(
-    activity: BaseActivity, val fileDirItems: List<FileDirItem>, recyclerView: MyRecyclerView,
+    activity: BaseActivity,
+    val fileDirItems: List<FileDirItem>,
+    recyclerView: MyRecyclerView,
     itemClick: (Any) -> Unit
 ) : MyRecyclerViewAdapter(activity, recyclerView, itemClick),
     RecyclerViewFastScroller.OnPopupTextUpdate {
@@ -33,7 +47,8 @@ class FilepickerItemsAdapter(
     private var fileDrawables = HashMap<String, Drawable>()
     private val hasOTGConnected = activity.hasOTGConnected()
     private var fontSize = 0f
-    private val cornerRadius = resources.getDimension(R.dimen.rounded_corner_radius_small).toInt()
+    private val cornerRadius =
+        resources.getDimension(R.dimen.rounded_corner_radius_small).toInt()
     private val dateFormat = activity.baseConfig.dateFormat
     private val timeFormat = activity.getTimeFormat()
 
@@ -68,7 +83,8 @@ class FilepickerItemsAdapter(
     override fun getItemKeyPosition(key: Int) =
         fileDirItems.indexOfFirst { it.path.hashCode() == key }
 
-    override fun getItemSelectionKey(position: Int) = fileDirItems[position].path.hashCode()
+    override fun getItemSelectionKey(position: Int) =
+        fileDirItems[position].path.hashCode()
 
     override fun onActionModeCreated() {}
 
@@ -97,8 +113,10 @@ class FilepickerItemsAdapter(
                 list_item_details.text = fileDirItem.size.formatSize()
                 val path = fileDirItem.path
                 val placeholder = fileDrawables.getOrElse(
-                    fileDirItem.name.substringAfterLast(".").toLowerCase(Locale.getDefault()),
-                    { fileDrawable })
+                    fileDirItem.name.substringAfterLast(".")
+                        .toLowerCase(Locale.getDefault()),
+                    { fileDrawable }
+                )
                 val options = RequestOptions()
                     .signature(fileDirItem.getKey())
                     .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
@@ -125,15 +143,15 @@ class FilepickerItemsAdapter(
                 if (!activity.isDestroyed && !activity.isFinishing) {
                     if (activity.isRestrictedSAFOnlyRoot(path)) {
                         itemToLoad = activity.getAndroidSAFUri(path)
-                    } else if (hasOTGConnected && itemToLoad is String && activity.isPathOnOTG(
-                            itemToLoad
-                        )
+                    } else if (hasOTGConnected && itemToLoad is String &&
+                        activity.isPathOnOTG(itemToLoad)
                     ) {
                         itemToLoad = itemToLoad.getOTGPublicPath(activity)
                     }
 
                     if (itemToLoad.toString().isGif()) {
-                        Glide.with(activity).asBitmap().load(itemToLoad).apply(options)
+                        Glide.with(activity).asBitmap().load(itemToLoad)
+                            .apply(options)
                             .into(list_item_icon)
                     } else {
                         Glide.with(activity)
@@ -150,17 +168,25 @@ class FilepickerItemsAdapter(
 
     private fun getChildrenCnt(item: FileDirItem): String {
         val children = item.children
-        return activity.resources.getQuantityString(R.plurals.items, children, children)
+        return activity.resources.getQuantityString(
+            R.plurals.items,
+            children,
+            children
+        )
     }
 
     private fun initDrawables() {
         folderDrawable =
-            resources.getColoredDrawableWithColor(R.drawable.ic_folder_vector, textColor)
+            resources.getColoredDrawableWithColor(
+                R.drawable.ic_folder_vector,
+                textColor
+            )
         folderDrawable.alpha = 180
         fileDrawable = resources.getDrawable(R.drawable.ic_file_generic)
         fileDrawables = getFilePlaceholderDrawables(activity)
     }
 
     override fun onChange(position: Int) =
-        fileDirItems.getOrNull(position)?.getBubbleText(activity, dateFormat, timeFormat) ?: ""
+        fileDirItems.getOrNull(position)
+            ?.getBubbleText(activity, dateFormat, timeFormat) ?: ""
 }

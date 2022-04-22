@@ -4,7 +4,20 @@ import android.content.Intent
 import android.provider.DocumentsContract
 import com.simplemobiletools.commons.dialogs.ConfirmationAdvancedDialog
 import com.simplemobiletools.commons.dialogs.WritePermissionDialog
-import com.simplemobiletools.commons.extensions.*
+import com.simplemobiletools.commons.extensions.baseConfig
+import com.simplemobiletools.commons.extensions.createAndroidDataOrObbUri
+import com.simplemobiletools.commons.extensions.getAndroidTreeUri
+import com.simplemobiletools.commons.extensions.getDocumentFile
+import com.simplemobiletools.commons.extensions.getDoesFilePathExist
+import com.simplemobiletools.commons.extensions.hasProperStoredAndroidTreeUri
+import com.simplemobiletools.commons.extensions.hasProperStoredTreeUri
+import com.simplemobiletools.commons.extensions.isPathOnOTG
+import com.simplemobiletools.commons.extensions.isPathOnSD
+import com.simplemobiletools.commons.extensions.isRestrictedSAFOnlyRoot
+import com.simplemobiletools.commons.extensions.isSDCardSetAsDefaultStorage
+import com.simplemobiletools.commons.extensions.needsStupidWritePermissions
+import com.simplemobiletools.commons.extensions.showErrorToast
+import com.simplemobiletools.commons.extensions.toast
 import com.simplemobiletools.commons.helpers.OPEN_DOCUMENT_TREE_FOR_ANDROID_DATA_OR_OBB
 import com.simplemobiletools.commons.helpers.OPEN_DOCUMENT_TREE_OTG
 import com.simplemobiletools.commons.helpers.OPEN_DOCUMENT_TREE_SD
@@ -40,12 +53,18 @@ fun BaseActivity.getFileOutputStream(
 
             if (!getDoesFilePathExist(fileDirItem.path)) {
                 document =
-                    document.createFile("", fileDirItem.name) ?: getDocumentFile(fileDirItem.path)
+                    document.createFile("", fileDirItem.name) ?: getDocumentFile(
+                        fileDirItem.path
+                    )
             }
 
             if (document?.exists() == true) {
                 try {
-                    callback(applicationContext.contentResolver.openOutputStream(document.uri))
+                    callback(
+                        applicationContext.contentResolver.openOutputStream(
+                            document.uri
+                        )
+                    )
                 } catch (e: FileNotFoundException) {
                     showErrorToast(e)
                     callback(null)
@@ -70,9 +89,13 @@ fun BaseActivity.getFileOutputStream(
 }
 
 fun BaseActivity.isShowingSAFDialog(path: String): Boolean {
-    return if ((!isRPlus() && isPathOnSD(path) && !isSDCardSetAsDefaultStorage() && (baseConfig.sdTreeUri.isEmpty() || !hasProperStoredTreeUri(
-            false
-        )))
+    return if ((
+        !isRPlus() && isPathOnSD(path) && !isSDCardSetAsDefaultStorage() && (
+            baseConfig.sdTreeUri.isEmpty() || !hasProperStoredTreeUri(
+                    false
+                )
+            )
+        )
     ) {
         runOnUiThread {
             if (!isDestroyed && !isFinishing) {
@@ -104,9 +127,11 @@ fun BaseActivity.isShowingSAFDialog(path: String): Boolean {
 }
 
 fun BaseActivity.isShowingAndroidSAFDialog(path: String): Boolean {
-    return if (isRestrictedSAFOnlyRoot(path) && (getAndroidTreeUri(path).isEmpty() || !hasProperStoredAndroidTreeUri(
-            path
-        ))
+    return if (isRestrictedSAFOnlyRoot(path) && (
+        getAndroidTreeUri(path).isEmpty() || !hasProperStoredAndroidTreeUri(
+                path
+            )
+        )
     ) {
         runOnUiThread {
             if (!isDestroyed && !isFinishing) {
@@ -156,9 +181,11 @@ fun BaseActivity.isShowingAndroidSAFDialog(path: String): Boolean {
 }
 
 fun BaseActivity.isShowingOTGDialog(path: String): Boolean {
-    return if (!isRPlus() && isPathOnOTG(path) && (baseConfig.OTGTreeUri.isEmpty() || !hasProperStoredTreeUri(
-            true
-        ))
+    return if (!isRPlus() && isPathOnOTG(path) && (
+        baseConfig.OTGTreeUri.isEmpty() || !hasProperStoredTreeUri(
+                true
+            )
+        )
     ) {
         showOTGPermissionDialog(path)
         true

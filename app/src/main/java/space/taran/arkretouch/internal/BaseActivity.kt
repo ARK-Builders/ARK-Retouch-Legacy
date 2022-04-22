@@ -8,12 +8,25 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.simplemobiletools.commons.activities.BaseSimpleActivity
 import com.simplemobiletools.commons.dialogs.WritePermissionDialog
-import com.simplemobiletools.commons.extensions.*
-import com.simplemobiletools.commons.helpers.*
+import com.simplemobiletools.commons.extensions.baseConfig
+import com.simplemobiletools.commons.extensions.createAndroidDataOrObbUri
+import com.simplemobiletools.commons.extensions.getPermissionString
+import com.simplemobiletools.commons.extensions.hasPermission
+import com.simplemobiletools.commons.extensions.isPathOnOTG
+import com.simplemobiletools.commons.extensions.isPathOnSD
+import com.simplemobiletools.commons.extensions.storeAndroidTreeUri
+import com.simplemobiletools.commons.extensions.toast
+import com.simplemobiletools.commons.extensions.updateOTGPathFromPartition
+import com.simplemobiletools.commons.helpers.EXTERNAL_STORAGE_PROVIDER_AUTHORITY
+import com.simplemobiletools.commons.helpers.OPEN_DOCUMENT_TREE_FOR_ANDROID_DATA_OR_OBB
+import com.simplemobiletools.commons.helpers.OPEN_DOCUMENT_TREE_OTG
+import com.simplemobiletools.commons.helpers.OPEN_DOCUMENT_TREE_SD
+import com.simplemobiletools.commons.helpers.SD_OTG_SHORT
+import com.simplemobiletools.commons.helpers.isRPlus
 import space.taran.arkretouch.R
 import java.util.regex.Pattern
 
-open class BaseActivity: AppCompatActivity() {
+open class BaseActivity : AppCompatActivity() {
 
     var actionOnPermission: ((granted: Boolean) -> Unit)? = null
     var isAskingPermissions = false
@@ -32,7 +45,10 @@ open class BaseActivity: AppCompatActivity() {
     }
 
     // synchronous return value determines only if we are showing the SAF dialog, callback result tells if the SD or OTG permission has been granted
-    fun handleSAFDialog(path: String, callback: (success: Boolean) -> Unit): Boolean {
+    fun handleSAFDialog(
+        path: String,
+        callback: (success: Boolean) -> Unit
+    ): Boolean {
         return if (!packageName.startsWith("space.taran")) {
             callback(true)
             false
@@ -45,7 +61,10 @@ open class BaseActivity: AppCompatActivity() {
         }
     }
 
-    fun handleAndroidSAFDialog(path: String, callback: (success: Boolean) -> Unit): Boolean {
+    fun handleAndroidSAFDialog(
+        path: String,
+        callback: (success: Boolean) -> Unit
+    ): Boolean {
         return if (!packageName.startsWith("space.taran")) {
             callback(true)
             false
@@ -96,11 +115,19 @@ open class BaseActivity: AppCompatActivity() {
         } else {
             isAskingPermissions = true
             actionOnPermission = callback
-            ActivityCompat.requestPermissions(this, arrayOf(getPermissionString(permissionId)), GENERIC_PERM_HANDLER)
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(getPermissionString(permissionId)),
+                GENERIC_PERM_HANDLER
+            )
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         isAskingPermissions = false
         if (requestCode == GENERIC_PERM_HANDLER && grantResults.isNotEmpty()) {
@@ -108,7 +135,11 @@ open class BaseActivity: AppCompatActivity() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, resultData: Intent?) {
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        resultData: Intent?
+    ) {
         super.onActivityResult(requestCode, resultCode, resultData)
         val partition = try {
             checkedDocumentPath.substring(9, 18)
@@ -119,9 +150,13 @@ open class BaseActivity: AppCompatActivity() {
         val sdOtgPattern = Pattern.compile(SD_OTG_SHORT)
 
         if (requestCode == OPEN_DOCUMENT_TREE_FOR_ANDROID_DATA_OR_OBB) {
-            if (resultCode == Activity.RESULT_OK && resultData != null && resultData.data != null) {
+            if (resultCode == Activity.RESULT_OK && resultData != null &&
+                resultData.data != null
+            ) {
                 if (isProperAndroidRoot(checkedDocumentPath, resultData.data!!)) {
-                    if (resultData.dataString == baseConfig.OTGTreeUri || resultData.dataString == baseConfig.sdTreeUri) {
+                    if (resultData.dataString == baseConfig.OTGTreeUri ||
+                        resultData.dataString == baseConfig.sdTreeUri
+                    ) {
                         toast(R.string.wrong_root_selected)
                         return
                     }
@@ -129,15 +164,23 @@ open class BaseActivity: AppCompatActivity() {
                     val treeUri = resultData.data
                     storeAndroidTreeUri(checkedDocumentPath, treeUri.toString())
 
-                    val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                    applicationContext.contentResolver.takePersistableUriPermission(treeUri!!, takeFlags)
+                    val takeFlags =
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    applicationContext.contentResolver.takePersistableUriPermission(
+                        treeUri!!,
+                        takeFlags
+                    )
                     funAfterSAFPermission?.invoke(true)
                     funAfterSAFPermission = null
                 } else {
                     toast(R.string.wrong_root_selected)
                     Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
                         if (isRPlus()) {
-                            putExtra(DocumentsContract.EXTRA_INITIAL_URI, createAndroidDataOrObbUri(checkedDocumentPath))
+                            putExtra(
+                                DocumentsContract.EXTRA_INITIAL_URI,
+                                createAndroidDataOrObbUri(checkedDocumentPath)
+                            )
                         }
                         startActivityForResult(this, requestCode)
                     }
@@ -146,9 +189,15 @@ open class BaseActivity: AppCompatActivity() {
                 funAfterSAFPermission?.invoke(false)
             }
         } else if (requestCode == OPEN_DOCUMENT_TREE_SD) {
-            if (resultCode == Activity.RESULT_OK && resultData != null && resultData.data != null) {
-                val isProperPartition = partition.isEmpty() || !sdOtgPattern.matcher(partition).matches() || (sdOtgPattern.matcher(partition)
-                    .matches() && resultData.dataString!!.contains(partition))
+            if (resultCode == Activity.RESULT_OK &&
+                resultData != null && resultData.data != null
+            ) {
+                val isProperPartition =
+                    partition.isEmpty() || !sdOtgPattern.matcher(partition)
+                        .matches() || (
+                        sdOtgPattern.matcher(partition)
+                            .matches() && resultData.dataString!!.contains(partition)
+                        )
                 if (isProperSDRootFolder(resultData.data!!) && isProperPartition) {
                     if (resultData.dataString == baseConfig.OTGTreeUri) {
                         toast(R.string.sd_card_usb_same)
@@ -167,9 +216,15 @@ open class BaseActivity: AppCompatActivity() {
                 funAfterSAFPermission?.invoke(false)
             }
         } else if (requestCode == OPEN_DOCUMENT_TREE_OTG) {
-            if (resultCode == Activity.RESULT_OK && resultData != null && resultData.data != null) {
-                val isProperPartition = partition.isEmpty() || !sdOtgPattern.matcher(partition).matches() || (sdOtgPattern.matcher(partition)
-                    .matches() && resultData.dataString!!.contains(partition))
+            if (resultCode == Activity.RESULT_OK &&
+                resultData != null && resultData.data != null
+            ) {
+                val isProperPartition =
+                    partition.isEmpty() || !sdOtgPattern.matcher(partition)
+                        .matches() || (
+                        sdOtgPattern.matcher(partition)
+                            .matches() && resultData.dataString!!.contains(partition)
+                        )
                 if (isProperOTGRootFolder(resultData.data!!) && isProperPartition) {
                     if (resultData.dataString == baseConfig.sdTreeUri) {
                         funAfterSAFPermission?.invoke(false)
@@ -177,11 +232,18 @@ open class BaseActivity: AppCompatActivity() {
                         return
                     }
                     baseConfig.OTGTreeUri = resultData.dataString!!
-                    baseConfig.OTGPartition = baseConfig.OTGTreeUri.removeSuffix("%3A").substringAfterLast('/').trimEnd('/')
+                    baseConfig.OTGPartition =
+                        baseConfig.OTGTreeUri.removeSuffix("%3A")
+                            .substringAfterLast('/').trimEnd('/')
                     updateOTGPathFromPartition()
 
-                    val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                    applicationContext.contentResolver.takePersistableUriPermission(resultData.data!!, takeFlags)
+                    val takeFlags =
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    applicationContext.contentResolver.takePersistableUriPermission(
+                        resultData.data!!,
+                        takeFlags
+                    )
 
                     funAfterSAFPermission?.invoke(true)
                     funAfterSAFPermission = null
@@ -207,24 +269,46 @@ open class BaseActivity: AppCompatActivity() {
         val treeUri = resultData.data
         baseConfig.sdTreeUri = treeUri.toString()
 
-        val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-        applicationContext.contentResolver.takePersistableUriPermission(treeUri!!, takeFlags)
+        val takeFlags =
+            Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+        applicationContext.contentResolver.takePersistableUriPermission(
+            treeUri!!,
+            takeFlags
+        )
     }
 
-    private fun isProperSDRootFolder(uri: Uri) = isExternalStorageDocument(uri) && isRootUri(uri) && !isInternalStorage(uri)
-    private fun isProperSDFolder(uri: Uri) = isExternalStorageDocument(uri) && !isInternalStorage(uri)
+    private fun isProperSDRootFolder(uri: Uri) =
+        isExternalStorageDocument(uri) && isRootUri(uri) && !isInternalStorage(uri)
 
-    private fun isProperOTGRootFolder(uri: Uri) = isExternalStorageDocument(uri) && isRootUri(uri) && !isInternalStorage(uri)
-    private fun isProperOTGFolder(uri: Uri) = isExternalStorageDocument(uri) && !isInternalStorage(uri)
+    private fun isProperSDFolder(uri: Uri) =
+        isExternalStorageDocument(uri) && !isInternalStorage(uri)
+
+    private fun isProperOTGRootFolder(uri: Uri) =
+        isExternalStorageDocument(uri) && isRootUri(uri) && !isInternalStorage(uri)
+
+    private fun isProperOTGFolder(uri: Uri) =
+        isExternalStorageDocument(uri) && !isInternalStorage(uri)
 
     private fun isRootUri(uri: Uri) = uri.lastPathSegment?.endsWith(":") ?: false
 
-    private fun isInternalStorage(uri: Uri) = isExternalStorageDocument(uri) && DocumentsContract.getTreeDocumentId(uri).contains("primary")
-    private fun isAndroidDir(uri: Uri) = isExternalStorageDocument(uri) && DocumentsContract.getTreeDocumentId(uri).contains(":Android")
-    private fun isInternalStorageAndroidDir(uri: Uri) = isInternalStorage(uri) && isAndroidDir(uri)
-    private fun isOTGAndroidDir(uri: Uri) = isProperOTGFolder(uri) && isAndroidDir(uri)
+    private fun isInternalStorage(uri: Uri) =
+        isExternalStorageDocument(uri) && DocumentsContract.getTreeDocumentId(uri)
+            .contains("primary")
+
+    private fun isAndroidDir(uri: Uri) =
+        isExternalStorageDocument(uri) && DocumentsContract.getTreeDocumentId(uri)
+            .contains(":Android")
+
+    private fun isInternalStorageAndroidDir(uri: Uri) =
+        isInternalStorage(uri) && isAndroidDir(uri)
+
+    private fun isOTGAndroidDir(uri: Uri) =
+        isProperOTGFolder(uri) && isAndroidDir(uri)
+
     private fun isSDAndroidDir(uri: Uri) = isProperSDFolder(uri) && isAndroidDir(uri)
-    private fun isExternalStorageDocument(uri: Uri) = EXTERNAL_STORAGE_PROVIDER_AUTHORITY == uri.authority
+    private fun isExternalStorageDocument(uri: Uri) =
+        EXTERNAL_STORAGE_PROVIDER_AUTHORITY == uri.authority
 
     private fun isProperAndroidRoot(path: String, uri: Uri): Boolean {
         return when {

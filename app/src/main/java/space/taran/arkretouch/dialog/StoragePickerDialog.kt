@@ -62,7 +62,8 @@ class StoragePickerDialog(
         radioGroup = view.dialog_radio_group
         val basePath = currPath.getBasePath(activity)
 
-        val internalButton = inflater.inflate(R.layout.radio_button, null) as RadioButton
+        val internalButton =
+            inflater.inflate(R.layout.radio_button, null) as RadioButton
         internalButton.apply {
             id = ID_INTERNAL
             text = resources.getString(R.string.internal)
@@ -75,7 +76,8 @@ class StoragePickerDialog(
         radioGroup.addView(internalButton, layoutParams)
 
         if (activity.hasExternalSDCard()) {
-            val sdButton = inflater.inflate(R.layout.radio_button, null) as RadioButton
+            val sdButton =
+                inflater.inflate(R.layout.radio_button, null) as RadioButton
             sdButton.apply {
                 id = ID_SD
                 text = resources.getString(R.string.sd_card)
@@ -89,7 +91,8 @@ class StoragePickerDialog(
         }
 
         if (activity.hasOTGConnected()) {
-            val otgButton = inflater.inflate(R.layout.radio_button, null) as RadioButton
+            val otgButton =
+                inflater.inflate(R.layout.radio_button, null) as RadioButton
             otgButton.apply {
                 id = ID_OTG
                 text = resources.getString(R.string.usb)
@@ -104,7 +107,8 @@ class StoragePickerDialog(
 
         // allow for example excluding the root folder at the gallery
         if (showRoot) {
-            val rootButton = inflater.inflate(R.layout.radio_button, null) as RadioButton
+            val rootButton =
+                inflater.inflate(R.layout.radio_button, null) as RadioButton
             rootButton.apply {
                 id = ID_ROOT
                 text = resources.getString(R.string.root)
