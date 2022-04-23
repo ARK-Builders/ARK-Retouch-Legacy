@@ -30,6 +30,7 @@ import com.simplemobiletools.commons.dialogs.ColorPickerDialog
 import com.simplemobiletools.commons.extensions.applyColorFilter
 import com.simplemobiletools.commons.extensions.beGone
 import com.simplemobiletools.commons.extensions.beGoneIf
+import com.simplemobiletools.commons.extensions.beInvisible
 import com.simplemobiletools.commons.extensions.beVisible
 import com.simplemobiletools.commons.extensions.beVisibleIf
 import com.simplemobiletools.commons.extensions.getAdjustedPrimaryColor
@@ -138,6 +139,17 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         setupDrawButtons()
         savePath = intent?.getStringExtra(PATH)
         intent.data?.let { initEditActivity(it) }
+
+        bottomRelativeEditor.setOnClickListener {
+            // bottomRelativeEditor.beInvisible()
+            bottomRelativeEditor.beInvisible()
+            bottomRelativeEditorDisable.beVisible()
+        }
+        bottomRelativeEditorDisable.setOnClickListener {
+            // bottomRelativeEditor.beInvisible()
+            bottomRelativeEditor.beVisible()
+            bottomRelativeEditorDisable.beInvisible()
+        }
     }
 
     override fun onResume() {
@@ -244,6 +256,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     }
 
     private fun loadDefaultImageView() {
+        bottomRelativeEditor.beVisible()
         default_image_view.beVisible()
         crop_image_view.beGone()
         editor_draw_canvas.beGone()

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="bottom_editor_actions_shadow_height">110dp</dimen>
+</resources>
