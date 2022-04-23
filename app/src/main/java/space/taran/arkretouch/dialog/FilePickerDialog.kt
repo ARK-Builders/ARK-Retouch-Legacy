@@ -3,6 +3,8 @@ package space.taran.arkretouch.dialog
 import android.os.Environment
 import android.os.Parcelable
 import android.view.KeyEvent
+import android.webkit.MimeTypeMap
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -44,6 +46,18 @@ class FilePickerDialog(
 
     private lateinit var mDialog: AlertDialog
     private var mDialogView = activity.layoutInflater.inflate(R.layout.dialog_filepicker, null)
+
+    val listOfImageMIMEType = listOf(
+    "image/gif",
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/svg+xml",
+    "image/webp",
+    "image/svg+xml",
+    "image/vnd.wap.wbmp",
+    "image/vnd.nok-wallpaper"
+    )
 
     init {
         if (!activity.getDoesFilePathExist(currPath)) {
@@ -219,8 +233,24 @@ class FilePickerDialog(
             currPath.trimEnd('/')
         }
 
-        callback(currPath)
-        mDialog.dismiss()
+        // Allow only image to be selected
+        if (listOfImageMIMEType.contains(getMimeType(currPath))) {
+            callback(currPath)
+            mDialog.dismiss()
+        } else {
+            Toast.makeText(activity, "Please select image only!", Toast.LENGTH_SHORT)
+                .show()
+        }
+    }
+
+    // url = file path or whatever suitable URL you want.
+    fun getMimeType(url: String?): String? {
+        var type: String? = null
+        val extension = MimeTypeMap.getFileExtensionFromUrl(url)
+        if (extension != null) {
+            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+        }
+        return type
     }
 
     private fun getItems(path: String, callback: (List<FileDirItem>) -> Unit) {
