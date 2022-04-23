@@ -4,8 +4,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/bottom_aspect_ratios_wrapper"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/bottom_actions_height"
-    android:paddingTop="@dimen/medium_margin">
+    android:layout_height="wrap_content"
+    android:paddingTop="@dimen/margin_5"
+    >
 
     <TextView
         android:id="@+id/bottom_aspect_ratio_free"
