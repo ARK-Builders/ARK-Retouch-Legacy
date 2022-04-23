@@ -143,12 +143,12 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         bottomRelativeEditor.setOnClickListener {
             // bottomRelativeEditor.beInvisible()
             bottomRelativeEditor.beInvisible()
-            bottomRelativeEditorDisable.beVisible()
+            bottomButtonEditorDisable.beVisible()
         }
-        bottomRelativeEditorDisable.setOnClickListener {
+        bottomButtonEditorDisable.setOnClickListener {
             // bottomRelativeEditor.beInvisible()
             bottomRelativeEditor.beVisible()
-            bottomRelativeEditorDisable.beInvisible()
+            bottomButtonEditorDisable.beInvisible()
         }
     }
 
