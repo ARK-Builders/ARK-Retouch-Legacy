@@ -171,24 +171,23 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_editor, menu)
+
         // disable the + icon if app open from other intent
         if (intent.data != null) {
             menu.findItem(R.id.open).isVisible = false
         }
-        //end
+
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.open -> {
-               // ask for permission
                 handlePermission(PERMISSION_WRITE_STORAGE) {
                     FilePickerDialog(this) {
                         initEditActivity(Uri.fromFile(File(it)))
                     }
                 }
-               //and
             }
             R.id.save_as -> {
                 handlePermission(PERMISSION_WRITE_STORAGE) {

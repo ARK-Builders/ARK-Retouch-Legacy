@@ -42,3 +42,5 @@ jobs:
       with:
         name: lint-results
         path: ./app/build/reports/lint-results.html
+    -   name: Kotlin linter
+      run: ./gradlew ktlintCheck
