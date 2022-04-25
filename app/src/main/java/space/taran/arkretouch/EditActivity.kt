@@ -171,6 +171,11 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_editor, menu)
+        // disable the + icon if app open from other intent
+        if (intent.data != null) {
+            menu.findItem(R.id.open).isVisible = false
+        }
+        //end
         return true
     }
 
