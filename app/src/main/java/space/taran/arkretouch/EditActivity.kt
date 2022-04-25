@@ -182,9 +182,13 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.open -> {
-                FilePickerDialog(this) {
-                    initEditActivity(Uri.fromFile(File(it)))
+               // ask for permission
+                handlePermission(PERMISSION_WRITE_STORAGE) {
+                    FilePickerDialog(this) {
+                        initEditActivity(Uri.fromFile(File(it)))
+                    }
                 }
+               //and
             }
             R.id.save_as -> {
                 handlePermission(PERMISSION_WRITE_STORAGE) {
