@@ -8,12 +8,14 @@ import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
 import android.graphics.Color
 import android.graphics.Point
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Parcelable
 import android.provider.MediaStore
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.RelativeLayout
@@ -120,6 +122,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         }
     }
 
+    private var rect: Rect? = null
     private var afterCroppedBitmap: Bitmap? = null
     private val TEMP_FOLDER_NAME = "images"
     private val ASPECT_X = "aspectX"
@@ -190,6 +193,9 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                 if (afterCroppedBitmap != null) {
                     b.putParcelable("imageCrop", afterCroppedBitmap)
                 }
+                if (rect != null) {
+                    b.putParcelable("imageCropRect", rect)
+                }
             }
             if (editor_draw_canvas.isVisible()) {
                 b.putParcelable("imageEdit", editor_draw_canvas.getBitmap())
@@ -206,8 +212,16 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         (b.getParcelable<Parcelable>("imageDefault") as Bitmap?)?.let { imageDefault ->
             loadDefaultImageView(imageDefault)
         }
-        (b.getParcelable<Parcelable>("imageCrop") as Bitmap?).let { imageCrop ->
+        (b.getParcelable<Parcelable>("imageCrop") as Bitmap?)?.let { imageCrop ->
             loadCropImageView(imageCrop)
+            bottom_aspect_ratios.beVisible()
+            bottomCropRotateClicked()
+            setupCropRotateActionButtons()
+            setupAspectRatioButtons()
+        }
+        (b.getParcelable<Parcelable>("imageCropRect"))?.let { imageRect ->
+            //crop_image_view.cropRect = imageRect as Rect?
+            loadCropImageView(rectNew = imageRect as Rect)
             bottom_aspect_ratios.beVisible()
             bottomCropRotateClicked()
             setupCropRotateActionButtons()
@@ -402,7 +416,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     }
 
     private fun loadCropImageView(
-        bitmap: Bitmap? = null,
+        bitmap: Bitmap? = null, rectNew: Rect? = null
     ) {
         bottomRelativeEditor.beVisible()
         default_image_view.beGone()
@@ -410,10 +424,19 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         crop_image_view.apply {
             beVisible()
             setOnCropImageCompleteListener(this@EditActivity)
+            setOnSetCropOverlayReleasedListener {
+                Log.d("CropRelease", "setOnSetCropOverlayReleasedListener")
+                rect = it
+
+            }
             if (bitmap != null) {
                 setImageBitmap(bitmap)
             } else {
                 setImageUriAsync(uri)
+            }
+            if (rectNew != null) {
+                cropRect = rectNew
+                rect = rectNew
             }
             guidelines = CropImageView.Guidelines.ON
 
