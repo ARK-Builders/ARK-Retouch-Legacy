@@ -1,7 +1,13 @@
 package space.taran.arkretouch.paint
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Matrix
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.Rect
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -9,7 +15,9 @@ import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat
 import space.taran.arkretouch.R
 
-class EditorDrawCanvas(context: Context, attrs: AttributeSet) : View(context, attrs) {
+class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
+    View(context, attrs) {
+    private var offsetY: Float = 0f
     private var mCurX = 0f
     private var mCurY = 0f
     private var mStartX = 0f
@@ -41,7 +49,7 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) : View(context, at
         canvas.save()
 
         if (backgroundBitmap != null) {
-            canvas.drawBitmap(backgroundBitmap!!, 0f, 0f, null)
+            canvas.drawBitmap(backgroundBitmap!!, 0f, offsetY, null)
         }
 
         for ((key, value) in mPaths) {
@@ -124,6 +132,7 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) : View(context, at
 
     fun updateBackgroundBitmap(bitmap: Bitmap) {
         backgroundBitmap = bitmap
+        offsetY = (height - bitmap.height) / 2f
         invalidate()
     }
 

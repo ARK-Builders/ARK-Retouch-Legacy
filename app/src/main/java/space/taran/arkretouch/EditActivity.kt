@@ -123,7 +123,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     }
 
     private var rect: Rect? = null
-    private var afterCroppedBitmap: Bitmap? = null
+    private var afterCroppedSaveClickBitmap: Bitmap? = null
     private val TEMP_FOLDER_NAME = "images"
     private val ASPECT_X = "aspectX"
     private val ASPECT_Y = "aspectY"
@@ -182,25 +182,28 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
 
     override fun onSaveInstanceState(b: Bundle) {
         super.onSaveInstanceState(b)
-        if (isChangingConfigurations) {
-            if (default_image_view.isVisible()) {
-                b.putParcelable(
-                    "imageDefault",
-                    default_image_view.drawable.toBitmap()
-                )
-            }
-            if (crop_image_view.isVisible()) {
-                if (afterCroppedBitmap != null) {
-                    b.putParcelable("imageCrop", afterCroppedBitmap)
+        try {
+            if (isChangingConfigurations) {
+                if (default_image_view.isVisible()) {
+                    b.putParcelable(
+                        "imageDefault",
+                        default_image_view.drawable.toBitmap()
+                    )
                 }
-                if (rect != null) {
-                    b.putParcelable("imageCropRect", rect)
+                if (crop_image_view.isVisible()) {
+                    if (afterCroppedSaveClickBitmap != null) { // called when user click save button
+                        b.putParcelable("imageCrop", afterCroppedSaveClickBitmap)
+                    }
+                    if (rect != null) { //called when user crop image
+                        b.putParcelable("imageCropRect", rect)
+                    }
                 }
+                if (editor_draw_canvas.isVisible()) {
+                    b.putParcelable("imageEdit", editor_draw_canvas.getBitmap())
+                }
+                b.putParcelable("imageUri", uri)
             }
-            if (editor_draw_canvas.isVisible()) {
-                b.putParcelable("imageEdit", editor_draw_canvas.getBitmap())
-            }
-            b.putParcelable("imageUri", uri)
+        } catch (e: Exception) {
         }
     }
 
@@ -212,16 +215,22 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         (b.getParcelable<Parcelable>("imageDefault") as Bitmap?)?.let { imageDefault ->
             loadDefaultImageView(imageDefault)
         }
-        (b.getParcelable<Parcelable>("imageCrop") as Bitmap?)?.let { imageCrop ->
+        if (b.getParcelable<Parcelable>("imageCrop") != null) { // called when user click save button
+            val imageCrop = b.getParcelable<Parcelable>("imageCrop") as Bitmap
             loadCropImageView(imageCrop)
             bottom_aspect_ratios.beVisible()
             bottomCropRotateClicked()
             setupCropRotateActionButtons()
             setupAspectRatioButtons()
-        }
-        (b.getParcelable<Parcelable>("imageCropRect"))?.let { imageRect ->
-            //crop_image_view.cropRect = imageRect as Rect?
+        } else if (b.getParcelable<Parcelable>("imageCropRect") != null) { //called when user crop image
+            val imageRect = b.getParcelable<Parcelable>("imageCropRect")
             loadCropImageView(rectNew = imageRect as Rect)
+            bottom_aspect_ratios.beVisible()
+            bottomCropRotateClicked()
+            setupCropRotateActionButtons()
+            setupAspectRatioButtons()
+        } else { // called when user just rotate the screen
+            loadCropImageView()
             bottom_aspect_ratios.beVisible()
             bottomCropRotateClicked()
             setupCropRotateActionButtons()
@@ -490,7 +499,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                     updateBackgroundBitmap(updatedBitmap)
                     layoutParams.width = updatedBitmap.width
                     layoutParams.height = updatedBitmap.height
-                    y = (height - updatedBitmap.height) / 2f
+                    //y = (height - updatedBitmap.height) / 2f
                     requestLayout()
                 }
             }
@@ -989,8 +998,8 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         if (result.error == null) {
             setOldExif()
 
-            afterCroppedBitmap = result.bitmap
-            afterCroppedBitmap?.let { bitmap ->
+            afterCroppedSaveClickBitmap = result.bitmap
+            afterCroppedSaveClickBitmap?.let { bitmap ->
                 if (isSharingBitmap) {
                     isSharingBitmap = false
                     shareBitmap(bitmap)
