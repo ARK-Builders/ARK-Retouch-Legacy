@@ -182,12 +182,11 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
 
     override fun onSaveInstanceState(b: Bundle) {
         super.onSaveInstanceState(b)
-        try {
             if (isChangingConfigurations) {
                 if (default_image_view.isVisible()) {
                     b.putParcelable(
                         "imageDefault",
-                        default_image_view.drawable.toBitmap()
+                        default_image_view.drawable?.toBitmap()
                     )
                 }
                 if (crop_image_view.isVisible()) {
@@ -203,8 +202,6 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                 }
                 b.putParcelable("imageUri", uri)
             }
-        } catch (e: Exception) {
-        }
     }
 
     override fun onRestoreInstanceState(b: Bundle) {
