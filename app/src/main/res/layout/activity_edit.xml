@@ -6,17 +6,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+
     <ImageView
         android:id="@+id/default_image_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/bottomFrameLayout" />
+        android:layout_above="@+id/bottomFrameLayout"
+        android:layout_alignParentTop="true" />
 
     <com.theartofdev.edmodo.cropper.CropImageView
         android:id="@+id/crop_image_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/bottomFrameLayout"
+        android:layout_alignParentTop="true"
         android:visibility="gone"
         app:cropBackgroundColor="@color/crop_image_view_background"
         app:cropInitialCropWindowPaddingRatio="0"
@@ -27,6 +30,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/bottomFrameLayout"
+        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
         android:background="@android:color/transparent"
         android:visibility="gone"
