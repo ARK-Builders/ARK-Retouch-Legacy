@@ -4,6 +4,7 @@ import android.annotation.TargetApi
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
 import android.graphics.Color
@@ -18,6 +19,8 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.ViewTreeObserver
+import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.widget.RelativeLayout
 import androidx.core.graphics.drawable.toBitmap
 import androidx.exifinterface.media.ExifInterface
@@ -69,6 +72,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
+import kotlin.math.max
 import kotlinx.android.synthetic.main.activity_edit.bottomButtonEditorDisable
 import kotlinx.android.synthetic.main.activity_edit.bottomRelativeEditor
 import kotlinx.android.synthetic.main.activity_edit.bottom_aspect_ratios
@@ -122,6 +126,8 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         }
     }
 
+    private var heightPortrait: Int = 0
+    private var heightLandscape: Int = 0
     private var rect: Rect? = null
     private var afterCroppedSaveClickBitmap: Bitmap? = null
     private val TEMP_FOLDER_NAME = "images"
@@ -182,26 +188,34 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
 
     override fun onSaveInstanceState(b: Bundle) {
         super.onSaveInstanceState(b)
-            if (isChangingConfigurations) {
-                if (default_image_view.isVisible()) {
-                    b.putParcelable(
-                        "imageDefault",
-                        default_image_view.drawable?.toBitmap()
-                    )
-                }
-                if (crop_image_view.isVisible()) {
-                    if (afterCroppedSaveClickBitmap != null) { // called when user click save button
-                        b.putParcelable("imageCrop", afterCroppedSaveClickBitmap)
-                    }
-                    if (rect != null) { //called when user crop image
-                        b.putParcelable("imageCropRect", rect)
-                    }
-                }
-                if (editor_draw_canvas.isVisible()) {
-                    b.putParcelable("imageEdit", editor_draw_canvas.getBitmap())
-                }
-                b.putParcelable("imageUri", uri)
+        if (isChangingConfigurations) {
+            if (default_image_view.isVisible()) {
+                b.putParcelable(
+                    "imageDefault",
+                    default_image_view.drawable?.toBitmap()
+                )
             }
+            if (crop_image_view.isVisible()) {
+                if (afterCroppedSaveClickBitmap != null) { // called when user click save button
+                    b.putParcelable("imageCrop", afterCroppedSaveClickBitmap)
+                }
+                if (rect != null) { //called when user crop image
+                    b.putParcelable("imageCropRect", rect)
+                }
+            }
+            if (editor_draw_canvas.isVisible()) {
+                b.putParcelable("imageEdit", editor_draw_canvas.getBitmap())
+                b.putInt(
+                    "imageEditHeightPortrait",
+                    heightPortrait
+                )
+                b.putInt(
+                    "imageEditHeightLandscape",
+                    heightLandscape
+                )
+            }
+            b.putParcelable("imageUri", uri)
+        }
     }
 
     override fun onRestoreInstanceState(b: Bundle) {
@@ -236,6 +250,8 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         (b.getParcelable<Parcelable>("imageEdit") as Bitmap?)?.let { imageCrop ->
             loadDrawCanvas(imageCrop)
             bottomDrawClicked()
+            heightPortrait = b.getInt("imageEditHeightPortrait")
+            heightLandscape = b.getInt("imageEditHeightLandscape")
         }
         setupPrimaryActionButtons()
     }
@@ -783,8 +799,55 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     }
 
     private fun updateBrushSize(percent: Int) {
-        editor_draw_canvas.updateBrushSize(percent)
-        val scale = Math.max(0.03f, percent / 100f)
+        if (editor_draw_canvas.measuredHeight == 0) {
+            val vto: ViewTreeObserver = editor_draw_canvas.viewTreeObserver
+            vto.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    if (editor_draw_canvas.measuredHeight > 0) {
+                        val orientation = resources.configuration.orientation
+                        if (Configuration.ORIENTATION_LANDSCAPE == orientation) {
+                            heightLandscape = editor_draw_canvas.measuredHeight
+                            editor_draw_canvas.viewTreeObserver.removeOnGlobalLayoutListener(
+                                this
+                            )
+                            editor_draw_canvas.updateBrushSize((heightLandscape * percent) / heightPortrait)
+                            Log.d(
+                                "changePaint",
+                                "changePaint updateBrushSize2 ${(heightLandscape * percent) / heightPortrait}"
+                            )
+                        } else {
+                            heightPortrait = editor_draw_canvas.measuredHeight
+                            editor_draw_canvas.viewTreeObserver.removeOnGlobalLayoutListener(
+                                this
+                            )
+                            editor_draw_canvas.updateBrushSize(percent)
+                            Log.d(
+                                "changePaint",
+                                "changePaint updateBrushSize2 $percent"
+                            )
+                        }
+                    }
+                }
+            })
+        } else {
+            val orientation = resources.configuration.orientation
+            if (Configuration.ORIENTATION_LANDSCAPE == orientation) {
+                heightLandscape = editor_draw_canvas.measuredHeight
+                editor_draw_canvas.updateBrushSize((heightLandscape * percent) / heightPortrait)
+                Log.d(
+                    "changePaint",
+                    "changePaint updateBrushSize2 ${(heightLandscape * percent) / heightPortrait}"
+                )
+            } else {
+                heightPortrait = editor_draw_canvas.measuredHeight
+                editor_draw_canvas.updateBrushSize(percent)
+                Log.d(
+                    "changePaint",
+                    "changePaint updateBrushSize2 $percent"
+                )
+            }
+        }
+        val scale = max(0.03f, percent / 100f)
         bottom_draw_color.scaleX = scale
         bottom_draw_color.scaleY = scale
     }
