@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
@@ -13,10 +12,13 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
+import com.theartofdev.edmodo.cropper.CropImageView
 import space.taran.arkretouch.R
 
 class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     View(context, attrs) {
+    private var rectNew: Rect? = null
     private var offsetY: Float = 0f
     private var mCurX = 0f
     private var mCurY = 0f
@@ -31,6 +33,14 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     private var mPaintOptions = PaintOptions()
 
     private var backgroundBitmap: Bitmap? = null
+    private var mCropSelectionPaint = Paint().apply {
+        color = Color.WHITE
+        style = Paint.Style.STROKE
+        strokeJoin = Paint.Join.BEVEL
+        strokeCap = Paint.Cap.SQUARE
+        strokeWidth = 5f
+        isAntiAlias = true
+    }
 
     init {
         mColor = ContextCompat.getColor(context, R.color.color_primary)
@@ -59,6 +69,17 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
 
         changePaint(mPaintOptions)
         canvas.drawPath(mPath, mPaint)
+        rectNew?.let {
+            canvas.drawRect(
+                it.left.toFloat(), it.top.toFloat(),
+                it.right.toFloat(),
+                it.bottom.toFloat(), mCropSelectionPaint
+            )
+            canvas.clipOutRect(it.left.toFloat(), it.top.toFloat(),
+                it.right.toFloat(),
+                it.bottom.toFloat())
+            canvas.drawColor(ResourcesCompat.getColor(resources,R.color.crop_image_view_background,resources.newTheme()))
+        }
         canvas.restore()
     }
 
@@ -145,6 +166,7 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     }
 
     fun getBitmap(): Bitmap {
+        drawRect()
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         canvas.drawColor(Color.WHITE)
@@ -160,5 +182,29 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
         val lastKey = mPaths.keys.lastOrNull()
         mPaths.remove(lastKey)
         invalidate()
+    }
+
+    fun drawRect(cropImageView: CropImageView? = null) {
+        if (cropImageView?.cropRect?.width() == this.layoutParams.width
+            && cropImageView?.cropRect?.height() == this.layoutParams.height
+        ) return
+        this.rectNew = cropImageView?.cropRect
+        invalidate()
+    }
+
+    fun getCropImage(): Bitmap {
+        val left = rectNew!!.left
+        val top = rectNew!!.top
+        val rectWidth = rectNew!!.width()
+        val rectHeight = rectNew!!.height()
+        var bitmap = getBitmap()
+        bitmap = Bitmap.createBitmap(
+            bitmap,
+            left,
+            top,
+            rectWidth,
+            rectHeight
+        )
+        return bitmap
     }
 }

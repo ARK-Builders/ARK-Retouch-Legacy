@@ -50,6 +50,7 @@ import com.simplemobiletools.commons.extensions.getParentPath
 import com.simplemobiletools.commons.extensions.getRealPathFromURI
 import com.simplemobiletools.commons.extensions.internalStoragePath
 import com.simplemobiletools.commons.extensions.isGone
+import com.simplemobiletools.commons.extensions.isInvisible
 import com.simplemobiletools.commons.extensions.isPathOnOTG
 import com.simplemobiletools.commons.extensions.isVisible
 import com.simplemobiletools.commons.extensions.onGlobalLayout
@@ -308,6 +309,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     private fun initEditActivity(imageUri: Uri) {
         uri = imageUri
         originalUri = uri
+        rect = null
         if (uri!!.scheme != "file" && uri!!.scheme != "content") {
             toast(R.string.unknown_file_location)
             finish()
@@ -371,7 +373,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         bottomRelativeEditor.beVisible()
         default_image_view.beVisible()
         crop_image_view.beGone()
-        editor_draw_canvas.beGone()
+        editor_draw_canvas.beInvisible()
 
         val options = RequestOptions()
             .skipMemoryCache(true)
@@ -412,7 +414,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                 ): Boolean {
                     val currentFilter = getFiltersAdapter()?.getCurrentFilter()
                     if (filterInitialBitmap == null) {
-                        loadCropImageView()
+                        loadCropImageView(bitmap = bitmap)
                         bottomCropRotateClicked()
                     }
 
@@ -442,23 +444,23 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     ) {
         bottomRelativeEditor.beVisible()
         default_image_view.beGone()
-        editor_draw_canvas.beGone()
+        editor_draw_canvas.beInvisible()
         crop_image_view.apply {
             beVisible()
             setOnCropImageCompleteListener(this@EditActivity)
-            setOnSetCropOverlayReleasedListener {
-                Log.d("CropRelease", "setOnSetCropOverlayReleasedListener")
-                rect = it
-
-            }
             if (bitmap != null) {
                 setImageBitmap(bitmap)
             } else {
                 setImageUriAsync(uri)
             }
+            isAutoZoomEnabled = false
             if (rectNew != null) {
                 cropRect = rectNew
                 rect = rectNew
+            }
+            setOnSetCropOverlayReleasedListener {
+                Log.d("CropRelease", "setOnSetCropOverlayReleasedListener $it")
+                rect = it
             }
             guidelines = CropImageView.Guidelines.ON
 
@@ -482,6 +484,8 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                     fillCanvasBackground(bitmap)
                 }
             }
+        } else {
+            editor_draw_canvas.drawRect(crop_image_view)
         }
     }
 
@@ -495,18 +499,12 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
             .fitCenter()
 
         try {
-            val builder = Glide.with(applicationContext)
-                .asBitmap()
-                .apply {
-                    if (bitmap != null) {
-                        load(bitmap)
-                    } else {
-                        load(uri)
-                    }
-                    apply(options)
-                }.into(editor_draw_canvas.width, editor_draw_canvas.height)
-
-            val updatedBitmap = builder.get()
+            val updatedBitmap = bitmap
+                ?: Glide.with(applicationContext)
+                    .asBitmap()
+                    .load(uri)
+                    .apply(options)
+                    .into(editor_draw_canvas.width, editor_draw_canvas.height).get()
             runOnUiThread {
                 editor_draw_canvas.apply {
                     updateBackgroundBitmap(updatedBitmap)
@@ -514,6 +512,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                     layoutParams.height = updatedBitmap.height
                     //y = (height - updatedBitmap.height) / 2f
                     requestLayout()
+                    drawRect(crop_image_view)
                 }
             }
         } catch (e: Exception) {
@@ -528,7 +527,12 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         if (crop_image_view.isVisible()) {
             crop_image_view.getCroppedImageAsync()
         } else if (editor_draw_canvas.isVisible()) {
-            val bitmap = editor_draw_canvas.getBitmap()
+            val bitmap =
+                if (crop_image_view?.cropRect?.width() == editor_draw_canvas.layoutParams.width
+                    && crop_image_view?.cropRect?.height() == editor_draw_canvas.layoutParams.height
+                ) editor_draw_canvas.getBitmap() else {
+                    editor_draw_canvas.getCropImage()
+                }
             if (!::saveUri.isInitialized) {
                 saveUri =
                     Uri.fromFile(File("$internalStoragePath/${getCurrentFormattedDateTime()}.jpg"))
@@ -854,10 +858,10 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
 
     private fun updatePrimaryActionButtons() {
         if (crop_image_view.isGone() && currPrimaryAction == PRIMARY_ACTION_CROP_ROTATE) {
-            loadCropImageView()
+            loadCropImageView(bitmap = editor_draw_canvas.getBitmap(),rectNew = rect)
         } else if (default_image_view.isGone() && currPrimaryAction == PRIMARY_ACTION_FILTER) {
             loadDefaultImageView()
-        } else if (editor_draw_canvas.isGone() && currPrimaryAction == PRIMARY_ACTION_DRAW) {
+        } else if (editor_draw_canvas.isInvisible() && currPrimaryAction == PRIMARY_ACTION_DRAW) {
             loadDrawCanvas()
         }
 
