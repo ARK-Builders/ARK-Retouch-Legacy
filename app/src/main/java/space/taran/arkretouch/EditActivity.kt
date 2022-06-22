@@ -23,7 +23,6 @@ import android.view.ViewTreeObserver
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.widget.RelativeLayout
 import androidx.core.graphics.drawable.toBitmap
-import androidx.core.graphics.toRect
 import androidx.exifinterface.media.ExifInterface
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
@@ -486,7 +485,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                 }
             }
         } else {
-            editor_draw_canvas.drawRect(crop_image_view.cropWindowRect?.toRect())
+            editor_draw_canvas.drawRect(crop_image_view)
         }
     }
 
@@ -513,7 +512,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                     layoutParams.height = updatedBitmap.height
                     //y = (height - updatedBitmap.height) / 2f
                     requestLayout()
-                    drawRect(crop_image_view.cropWindowRect?.toRect())
+                    drawRect(crop_image_view)
                 }
             }
         } catch (e: Exception) {
@@ -528,7 +527,12 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         if (crop_image_view.isVisible()) {
             crop_image_view.getCroppedImageAsync()
         } else if (editor_draw_canvas.isVisible()) {
-            val bitmap = editor_draw_canvas.getBitmap()
+            val bitmap =
+                if (crop_image_view?.cropRect?.width() == editor_draw_canvas.layoutParams.width
+                    && crop_image_view?.cropRect?.height() == editor_draw_canvas.layoutParams.height
+                ) editor_draw_canvas.getBitmap() else {
+                    editor_draw_canvas.getCropImage()
+                }
             if (!::saveUri.isInitialized) {
                 saveUri =
                     Uri.fromFile(File("$internalStoragePath/${getCurrentFormattedDateTime()}.jpg"))

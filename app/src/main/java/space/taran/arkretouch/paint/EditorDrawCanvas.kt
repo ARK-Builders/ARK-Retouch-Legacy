@@ -13,6 +13,7 @@ import android.view.View
 import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
+import com.theartofdev.edmodo.cropper.CropImageView
 import space.taran.arkretouch.R
 
 class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
@@ -183,10 +184,27 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
         invalidate()
     }
 
-    fun drawRect(rectNew: Rect? = null) {
-        if (rectNew?.width() == width && rectNew?.height() == height)
-            return
-        this.rectNew = rectNew
+    fun drawRect(cropImageView: CropImageView? = null) {
+        if (cropImageView?.cropRect?.width() == this.layoutParams.width
+            && cropImageView?.cropRect?.height() == this.layoutParams.height
+        ) return
+        this.rectNew = cropImageView?.cropRect
         invalidate()
+    }
+
+    fun getCropImage(): Bitmap {
+        val left = rectNew!!.left
+        val top = rectNew!!.top
+        val rectWidth = rectNew!!.width()
+        val rectHeight = rectNew!!.height()
+        var bitmap = getBitmap()
+        bitmap = Bitmap.createBitmap(
+            bitmap,
+            left,
+            top,
+            rectWidth,
+            rectHeight
+        )
+        return bitmap
     }
 }
