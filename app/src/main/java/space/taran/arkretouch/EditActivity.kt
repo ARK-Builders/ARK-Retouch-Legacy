@@ -2,6 +2,7 @@ package space.taran.arkretouch
 
 import android.annotation.TargetApi
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -272,6 +273,32 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         if (isEditingWithThirdParty) {
             finish()
         }
+    }
+
+    override fun onBackPressed() {
+        if ((crop_image_view.isVisible() && (crop_image_view?.cropRect?.width() != crop_image_view.wholeImageRect.width()
+                || crop_image_view?.cropRect?.height() != crop_image_view.wholeImageRect.height()))
+                || (editor_draw_canvas.isVisible() && editor_draw_canvas.isCanvasChanged())
+                || (default_image_view.isVisible() && filterInitialBitmap != default_image_view.drawable.toBitmap())
+        ){
+            val builder: AlertDialog.Builder = AlertDialog.Builder(this)
+            builder.setCancelable(false)
+            builder.setMessage("Do you want to save the changes?")
+            builder.setPositiveButton(
+                "Yes"
+            ) { dialog, it -> //if user pressed "yes", then he is allowed to save changes
+                saveImage()
+            }
+            builder.setNegativeButton(
+                "No"
+            ) { dialog, it -> //if user select "No", just cancel this dialog and continue with app
+                super.onBackPressed()
+                //dialog.cancel()
+            }
+            val alert: AlertDialog = builder.create()
+            alert.show()
+        }else
+            super.onBackPressed()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -932,8 +959,13 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                     val adapter = FiltersAdapter(applicationContext, filterItems) {
                         val layoutManager =
                             bottom_actions_filter_list.layoutManager as LinearLayoutManager
-                        applyFilter(filterItems[it])
-
+                        getFiltersAdapter()?.getCurrentFilter()?.let { currentFilter ->
+                            if (currentFilter.filter.name != getString(R.string.none)) {
+                                applyFilter(currentFilter)
+                            }else{
+                                default_image_view.setImageBitmap(filterInitialBitmap)
+                            }
+                        }
                         if (it == layoutManager.findLastCompletelyVisibleItemPosition() || it == layoutManager.findLastVisibleItemPosition()) {
                             bottom_actions_filter_list.smoothScrollBy(thumbnailSize, 0)
                         } else if (it == layoutManager.findFirstCompletelyVisibleItemPosition() || it == layoutManager.findFirstVisibleItemPosition()) {

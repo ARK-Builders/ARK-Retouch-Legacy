@@ -207,4 +207,8 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
         )
         return bitmap
     }
+
+    fun isCanvasChanged(): Boolean {
+        return mPaths.isNotEmpty()
+    }
 }
