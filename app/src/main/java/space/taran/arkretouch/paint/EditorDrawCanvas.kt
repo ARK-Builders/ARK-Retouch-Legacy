@@ -13,7 +13,6 @@ import android.view.View
 import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
-import com.theartofdev.edmodo.cropper.CropImageView
 import space.taran.arkretouch.R
 
 class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
@@ -165,12 +164,17 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
         requestLayout()
     }
 
-    fun getBitmap(): Bitmap {
+    fun getBitmap(): Bitmap? {
+        if(backgroundBitmap==null){
+            return null
+        }
+        val rect = this.rectNew
         drawRect()
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         canvas.drawColor(Color.WHITE)
         draw(canvas)
+        drawRect(rect)
         return bitmap
     }
 
@@ -184,27 +188,26 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
         invalidate()
     }
 
-    fun drawRect(cropImageView: CropImageView? = null) {
-        if (cropImageView?.cropRect?.width() == this.layoutParams.width
-            && cropImageView?.cropRect?.height() == this.layoutParams.height
-        ) return
-        this.rectNew = cropImageView?.cropRect
+    fun drawRect(rect: Rect? = null) {
+        this.rectNew = rect
         invalidate()
     }
 
-    fun getCropImage(): Bitmap {
+    fun getCropImage(): Bitmap? {
         val left = rectNew!!.left
         val top = rectNew!!.top
         val rectWidth = rectNew!!.width()
         val rectHeight = rectNew!!.height()
         var bitmap = getBitmap()
-        bitmap = Bitmap.createBitmap(
-            bitmap,
-            left,
-            top,
-            rectWidth,
-            rectHeight
-        )
+        bitmap = bitmap?.let {
+            Bitmap.createBitmap(
+                it,
+                left,
+                top,
+                rectWidth,
+                rectHeight
+            )
+        }
         return bitmap
     }
 

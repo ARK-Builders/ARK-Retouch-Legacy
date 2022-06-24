@@ -276,8 +276,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     }
 
     override fun onBackPressed() {
-        if ((crop_image_view.isVisible() && (crop_image_view?.cropRect?.width() != crop_image_view.wholeImageRect.width()
-                || crop_image_view?.cropRect?.height() != crop_image_view.wholeImageRect.height()))
+        if ((crop_image_view.isVisible() && crop_image_view.isCropAreaChanged())
                 || (editor_draw_canvas.isVisible() && editor_draw_canvas.isCanvasChanged())
                 || (default_image_view.isVisible() && filterInitialBitmap != default_image_view.drawable.toBitmap())
         ){
@@ -512,13 +511,11 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                 }
             }
         } else {
-            editor_draw_canvas.drawRect(crop_image_view)
+            editor_draw_canvas.drawRect(if (crop_image_view.isCropAreaChanged()) crop_image_view.cropRect else null)
         }
     }
 
     private fun fillCanvasBackground(bitmap: Bitmap? = null) {
-        val size = Point()
-        windowManager.defaultDisplay.getSize(size)
         val options = RequestOptions()
             .format(DecodeFormat.PREFER_ARGB_8888)
             .skipMemoryCache(true)
@@ -539,7 +536,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                     layoutParams.height = updatedBitmap.height
                     //y = (height - updatedBitmap.height) / 2f
                     requestLayout()
-                    drawRect(crop_image_view)
+                    editor_draw_canvas.drawRect(if (crop_image_view.isCropAreaChanged()) crop_image_view.cropRect else null)
                 }
             }
         } catch (e: Exception) {
@@ -554,29 +551,29 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         if (crop_image_view.isVisible()) {
             crop_image_view.getCroppedImageAsync()
         } else if (editor_draw_canvas.isVisible()) {
-            val bitmap =
-                if (crop_image_view?.cropRect?.width() == editor_draw_canvas.layoutParams.width
-                    && crop_image_view?.cropRect?.height() == editor_draw_canvas.layoutParams.height
-                ) editor_draw_canvas.getBitmap() else {
-                    editor_draw_canvas.getCropImage()
-                }
+            val bitmap = if (!crop_image_view.isCropAreaChanged())
+                editor_draw_canvas.getBitmap()
+            else
+                editor_draw_canvas.getCropImage()
             if (!::saveUri.isInitialized) {
                 saveUri =
                     Uri.fromFile(File("$internalStoragePath/${getCurrentFormattedDateTime()}.jpg"))
             }
-            if (saveUri.scheme == "file") {
-                SaveAsDialog(this, savePath, saveUri.path!!, true) {
-                    saveBitmapToFile(bitmap, it, true)
-                }
-            } else if (saveUri.scheme == "content") {
-                val filePathGetter = getNewFilePath()
-                SaveAsDialog(
-                    this,
-                    savePath,
-                    filePathGetter.first,
-                    filePathGetter.second
-                ) {
-                    saveBitmapToFile(bitmap, it, true)
+            if (bitmap!=null){
+                if (saveUri.scheme == "file") {
+                    SaveAsDialog(this, savePath, saveUri.path!!, true) {
+                        saveBitmapToFile(bitmap, it, true)
+                    }
+                } else if (saveUri.scheme == "content") {
+                    val filePathGetter = getNewFilePath()
+                    SaveAsDialog(
+                        this,
+                        savePath,
+                        filePathGetter.first,
+                        filePathGetter.second
+                    ) {
+                        saveBitmapToFile(bitmap, it, true)
+                    }
                 }
             }
         } else {
@@ -644,7 +641,8 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                         crop_image_view.getCroppedImageAsync()
                     }
                 }
-                editor_draw_canvas.isVisible() -> shareBitmap(editor_draw_canvas.getBitmap())
+                editor_draw_canvas.isVisible() -> editor_draw_canvas.getBitmap()
+                    ?.let { shareBitmap(it) }
             }
         }
     }
@@ -1252,4 +1250,9 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     }
 
     private val Context.config: Config get() = Config.newInstance(applicationContext)
+}
+
+fun CropImageView.isCropAreaChanged(): Boolean {
+    return cropRect?.width() != wholeImageRect.width()
+        || cropRect?.height() != wholeImageRect.height()
 }
