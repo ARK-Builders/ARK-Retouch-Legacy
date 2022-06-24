@@ -5,35 +5,35 @@
     android:id="@+id/activity_edit_holder"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-    <ImageView
-        android:id="@+id/default_image_view"
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentBottom="true"/>
-
-    <com.theartofdev.edmodo.cropper.CropImageView
-        android:id="@+id/crop_image_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone"
-        android:layout_alignParentTop="true"
-        tools:visibility="visible"
-        android:layout_alignParentBottom="true"
-        app:cropBackgroundColor="@color/crop_image_view_background"
-        app:cropInitialCropWindowPaddingRatio="0" />
-
-    <space.taran.arkretouch.paint.EditorDrawCanvas
-        android:id="@+id/editor_draw_canvas"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_centerHorizontal="true"
         android:layout_alignParentTop="true"
         android:layout_alignParentBottom="true"
-        android:background="@android:color/transparent"
-        android:visibility="gone"
-        tools:visibility="visible"/>
+        android:layout_centerHorizontal="true">
+        <ImageView
+            android:id="@+id/default_image_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
+        <com.theartofdev.edmodo.cropper.CropImageView
+            android:id="@+id/crop_image_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            tools:visibility="visible"
+            app:cropBackgroundColor="@color/crop_image_view_background"
+            app:cropInitialCropWindowPaddingRatio="0" />
+
+        <space.taran.arkretouch.paint.EditorDrawCanvas
+            android:id="@+id/editor_draw_canvas"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:background="@android:color/transparent"
+            android:visibility="gone"
+            tools:visibility="visible"/>
+    </FrameLayout>
 
     <RelativeLayout
         android:id="@+id/bottomRelativeEditor"

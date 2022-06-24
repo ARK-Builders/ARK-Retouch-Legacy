@@ -59,7 +59,7 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
         canvas.save()
 
         if (backgroundBitmap != null) {
-            canvas.drawBitmap(backgroundBitmap!!, 0f, offsetY, null)
+            canvas.drawBitmap(backgroundBitmap!!, 0f, 0f, null)
         }
 
         for ((key, value) in mPaths) {
