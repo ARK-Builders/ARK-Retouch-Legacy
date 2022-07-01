@@ -2,6 +2,7 @@ package space.taran.arkretouch
 
 import android.annotation.TargetApi
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -274,6 +275,31 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         }
     }
 
+    override fun onBackPressed() {
+        if ((crop_image_view.isVisible() && crop_image_view.isCropAreaChanged())
+                || (editor_draw_canvas.isVisible() && editor_draw_canvas.isCanvasChanged())
+                || (default_image_view.isVisible() && filterInitialBitmap != default_image_view.drawable.toBitmap())
+        ){
+            val builder: AlertDialog.Builder = AlertDialog.Builder(this)
+            builder.setCancelable(false)
+            builder.setMessage("Do you want to save the changes?")
+            builder.setPositiveButton(
+                "Yes"
+            ) { dialog, it -> //if user pressed "yes", then he is allowed to save changes
+                saveImage()
+            }
+            builder.setNegativeButton(
+                "No"
+            ) { dialog, it -> //if user select "No", just cancel this dialog and continue with app
+                super.onBackPressed()
+                //dialog.cancel()
+            }
+            val alert: AlertDialog = builder.create()
+            alert.show()
+        }else
+            super.onBackPressed()
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_editor, menu)
 
@@ -485,13 +511,11 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                 }
             }
         } else {
-            editor_draw_canvas.drawRect(crop_image_view)
+            editor_draw_canvas.drawRect(if (crop_image_view.isCropAreaChanged()) crop_image_view.cropRect else null)
         }
     }
 
     private fun fillCanvasBackground(bitmap: Bitmap? = null) {
-        val size = Point()
-        windowManager.defaultDisplay.getSize(size)
         val options = RequestOptions()
             .format(DecodeFormat.PREFER_ARGB_8888)
             .skipMemoryCache(true)
@@ -512,7 +536,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                     layoutParams.height = updatedBitmap.height
                     //y = (height - updatedBitmap.height) / 2f
                     requestLayout()
-                    drawRect(crop_image_view)
+                    editor_draw_canvas.drawRect(if (crop_image_view.isCropAreaChanged()) crop_image_view.cropRect else null)
                 }
             }
         } catch (e: Exception) {
@@ -527,29 +551,29 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         if (crop_image_view.isVisible()) {
             crop_image_view.getCroppedImageAsync()
         } else if (editor_draw_canvas.isVisible()) {
-            val bitmap =
-                if (crop_image_view?.cropRect?.width() == editor_draw_canvas.layoutParams.width
-                    && crop_image_view?.cropRect?.height() == editor_draw_canvas.layoutParams.height
-                ) editor_draw_canvas.getBitmap() else {
-                    editor_draw_canvas.getCropImage()
-                }
+            val bitmap = if (!crop_image_view.isCropAreaChanged())
+                editor_draw_canvas.getBitmap()
+            else
+                editor_draw_canvas.getCropImage()
             if (!::saveUri.isInitialized) {
                 saveUri =
                     Uri.fromFile(File("$internalStoragePath/${getCurrentFormattedDateTime()}.jpg"))
             }
-            if (saveUri.scheme == "file") {
-                SaveAsDialog(this, savePath, saveUri.path!!, true) {
-                    saveBitmapToFile(bitmap, it, true)
-                }
-            } else if (saveUri.scheme == "content") {
-                val filePathGetter = getNewFilePath()
-                SaveAsDialog(
-                    this,
-                    savePath,
-                    filePathGetter.first,
-                    filePathGetter.second
-                ) {
-                    saveBitmapToFile(bitmap, it, true)
+            if (bitmap!=null){
+                if (saveUri.scheme == "file") {
+                    SaveAsDialog(this, savePath, saveUri.path!!, true) {
+                        saveBitmapToFile(bitmap, it, true)
+                    }
+                } else if (saveUri.scheme == "content") {
+                    val filePathGetter = getNewFilePath()
+                    SaveAsDialog(
+                        this,
+                        savePath,
+                        filePathGetter.first,
+                        filePathGetter.second
+                    ) {
+                        saveBitmapToFile(bitmap, it, true)
+                    }
                 }
             }
         } else {
@@ -617,7 +641,8 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                         crop_image_view.getCroppedImageAsync()
                     }
                 }
-                editor_draw_canvas.isVisible() -> shareBitmap(editor_draw_canvas.getBitmap())
+                editor_draw_canvas.isVisible() -> editor_draw_canvas.getBitmap()
+                    ?.let { shareBitmap(it) }
             }
         }
     }
@@ -932,8 +957,13 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                     val adapter = FiltersAdapter(applicationContext, filterItems) {
                         val layoutManager =
                             bottom_actions_filter_list.layoutManager as LinearLayoutManager
-                        applyFilter(filterItems[it])
-
+                        getFiltersAdapter()?.getCurrentFilter()?.let { currentFilter ->
+                            if (currentFilter.filter.name != getString(R.string.none)) {
+                                applyFilter(currentFilter)
+                            }else{
+                                default_image_view.setImageBitmap(filterInitialBitmap)
+                            }
+                        }
                         if (it == layoutManager.findLastCompletelyVisibleItemPosition() || it == layoutManager.findLastVisibleItemPosition()) {
                             bottom_actions_filter_list.smoothScrollBy(thumbnailSize, 0)
                         } else if (it == layoutManager.findFirstCompletelyVisibleItemPosition() || it == layoutManager.findFirstVisibleItemPosition()) {
@@ -1220,4 +1250,9 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     }
 
     private val Context.config: Config get() = Config.newInstance(applicationContext)
+}
+
+fun CropImageView.isCropAreaChanged(): Boolean {
+    return cropRect?.width() != wholeImageRect.width()
+        || cropRect?.height() != wholeImageRect.height()
 }
