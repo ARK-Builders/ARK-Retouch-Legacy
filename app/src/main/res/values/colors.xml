@@ -11,4 +11,5 @@
     <color name="color_primary">@color/purple_200</color>
     <color name="crop_image_view_background">#BB000000</color>
     <color name="gradient_grey_start">#CC000000</color>
+    <color name="non_drawable_area">#C8C8C8</color>
 </resources>

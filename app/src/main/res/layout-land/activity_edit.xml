@@ -10,8 +10,9 @@
         android:layout_height="match_parent"
         android:layout_alignParentTop="true"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true">
-        <ImageView
+        android:layout_centerHorizontal="true"
+        android:background="@color/non_drawable_area">
+    <ImageView
             android:id="@+id/default_image_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />

@@ -9,8 +9,9 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/bottomFrameLayout"
-        android:layout_alignParentTop="true">
+        android:layout_above="@+id/bottomRelativeEditor"
+        android:layout_alignParentTop="true"
+        android:background="@color/non_drawable_area">
         <ImageView
             android:id="@+id/default_image_view"
             android:layout_width="match_parent"
@@ -35,76 +36,70 @@
             tools:visibility="visible" />
     </FrameLayout>
 
-    <FrameLayout
-        android:id="@+id/bottomFrameLayout"
+    <RelativeLayout
+        android:id="@+id/bottomRelativeEditor"
         android:layout_width="match_parent"
         android:layout_height="@dimen/bottom_editor_actions_shadow_height"
+        android:visibility="gone"
+        tools:visibility="visible"
         android:layout_alignParentBottom="true">
 
         <RelativeLayout
-            android:id="@+id/bottomRelativeEditor"
+            android:id="@+id/bottom_editor_actions_background"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_alignParentBottom="true"
+            android:alpha="0.5"
+            android:background="@drawable/gradient_background" />
+
+        <include
+            android:id="@+id/bottom_editor_primary_actions"
+            layout="@layout/bottom_editor_primary_actions" />
+
+        <include
+            android:id="@+id/bottom_aspect_ratios"
+            layout="@layout/bottom_actions_aspect_ratio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/bottom_editor_crop_rotate_actions"
             android:visibility="gone"
-            tools:visibility="visible">
+            tools:visibility="visible" />
 
-            <RelativeLayout
-                android:id="@+id/bottom_editor_actions_background"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_alignParentBottom="true"
-                android:alpha="0.5"
-                android:background="@drawable/gradient_background" />
-
-            <include
-                android:id="@+id/bottom_editor_primary_actions"
-                layout="@layout/bottom_editor_primary_actions" />
-
-            <include
-                android:id="@+id/bottom_aspect_ratios"
-                layout="@layout/bottom_actions_aspect_ratio"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_above="@+id/bottom_editor_crop_rotate_actions"
-                android:visibility="gone"
-                tools:visibility="visible" />
-
-            <include
-                android:id="@+id/bottom_editor_filter_actions"
-                layout="@layout/bottom_editor_actions_filter"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_above="@+id/bottom_editor_primary_actions"
-                android:visibility="gone"
-
-                />
-
-            <include
-                android:id="@+id/bottom_editor_crop_rotate_actions"
-                layout="@layout/bottom_editor_crop_rotate_actions"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_above="@+id/bottom_editor_primary_actions"
-                android:visibility="gone"
-                tools:visibility="visible" />
-
-            <include
-                android:id="@+id/bottom_editor_draw_actions"
-                layout="@layout/bottom_editor_draw_actions"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_above="@+id/bottom_editor_primary_actions"
-                android:visibility="gone" />
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:id="@+id/bottomButtonEditorDisable"
+        <include
+            android:id="@+id/bottom_editor_filter_actions"
+            layout="@layout/bottom_editor_actions_filter"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clickable="true"
-            android:focusable="true"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/bottom_editor_primary_actions"
+            android:visibility="gone"
+
+            />
+
+        <include
+            android:id="@+id/bottom_editor_crop_rotate_actions"
+            layout="@layout/bottom_editor_crop_rotate_actions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/bottom_editor_primary_actions"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <include
+            android:id="@+id/bottom_editor_draw_actions"
+            layout="@layout/bottom_editor_draw_actions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/bottom_editor_primary_actions"
             android:visibility="gone" />
-    </FrameLayout>
+    </RelativeLayout>
 
-
+    <RelativeLayout
+        android:id="@+id/bottomButtonEditorDisable"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/bottom_editor_actions_shadow_height"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        android:background="@color/non_drawable_area"
+        android:layout_alignParentBottom="true"/>
 </RelativeLayout>

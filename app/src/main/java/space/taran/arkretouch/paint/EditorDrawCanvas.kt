@@ -186,7 +186,7 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
 
     fun drawRect(cropImageView: CropImageView? = null) {
         if (cropImageView?.cropRect?.width() == this.layoutParams.width
-            && cropImageView?.cropRect?.height() == this.layoutParams.height
+            && cropImageView.cropRect?.height() == this.layoutParams.height
         ) return
         this.rectNew = cropImageView?.cropRect
         invalidate()
