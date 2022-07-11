@@ -206,7 +206,8 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                 }
             }
             if (editor_draw_canvas.isVisible()) {
-                b.putParcelable("imageEdit", editor_draw_canvas.getBitmap())
+                // b.putParcelable("imageEdit", editor_draw_canvas.getBitmap())
+                b.putSerializable("imageEditDetails", editor_draw_canvas.getDrawingDetails())
                 b.putInt(
                     "imageEditHeightPortrait",
                     heightPortrait
@@ -249,8 +250,8 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
             setupCropRotateActionButtons()
             setupAspectRatioButtons()
         }
-        (b.getParcelable<Parcelable>("imageEdit") as Bitmap?)?.let { imageCrop ->
-            loadDrawCanvas(imageCrop)
+        (b.getSerializable("imageEditDetails") as LinkedHashMap<*, *>?)?.let {
+            loadDrawCanvas(imageEditDetails = it)
             bottomDrawClicked()
             heightPortrait = b.getInt("imageEditHeightPortrait")
             heightLandscape = b.getInt("imageEditHeightLandscape")
@@ -498,7 +499,10 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         }
     }
 
-    private fun loadDrawCanvas(bitmap: Bitmap? = null) {
+    private fun loadDrawCanvas(
+        bitmap: Bitmap? = null,
+        imageEditDetails: java.util.LinkedHashMap<*, *>? = null
+    ) {
         bottomRelativeEditor.beVisible()
         default_image_view.beGone()
         crop_image_view.beGone()
@@ -507,15 +511,19 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
             wasDrawCanvasPositioned = true
             editor_draw_canvas.onGlobalLayout {
                 ensureBackgroundThread {
-                    fillCanvasBackground(bitmap)
+                    fillCanvasBackground(bitmap, imageEditDetails)
                 }
             }
         } else {
             editor_draw_canvas.drawRect(if (crop_image_view.isCropAreaChanged()) crop_image_view.cropRect else null)
+            editor_draw_canvas.updateDrawingDetails(imageEditDetails)
         }
     }
 
-    private fun fillCanvasBackground(bitmap: Bitmap? = null) {
+    private fun fillCanvasBackground(
+        bitmap: Bitmap? = null,
+        imageEditDetails: java.util.LinkedHashMap<*, *>? = null
+    ) {
         val options = RequestOptions()
             .format(DecodeFormat.PREFER_ARGB_8888)
             .skipMemoryCache(true)
@@ -528,7 +536,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                     .asBitmap()
                     .load(uri)
                     .apply(options)
-                    .into(editor_draw_canvas.width, editor_draw_canvas.height).get()
+                    .submit(editor_draw_canvas.width, editor_draw_canvas.height).get()
             runOnUiThread {
                 editor_draw_canvas.apply {
                     updateBackgroundBitmap(updatedBitmap)
@@ -537,6 +545,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                     //y = (height - updatedBitmap.height) / 2f
                     requestLayout()
                     editor_draw_canvas.drawRect(if (crop_image_view.isCropAreaChanged()) crop_image_view.cropRect else null)
+                    editor_draw_canvas.updateDrawingDetails(imageEditDetails)
                 }
             }
         } catch (e: Exception) {
@@ -839,11 +848,14 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                             editor_draw_canvas.viewTreeObserver.removeOnGlobalLayoutListener(
                                 this
                             )
-                            editor_draw_canvas.updateBrushSize((heightLandscape * percent) / heightPortrait)
-                            Log.d(
-                                "changePaint",
-                                "changePaint updateBrushSize2 ${(heightLandscape * percent) / heightPortrait}"
-                            )
+                            if (heightPortrait > 0) {
+                                editor_draw_canvas.updateBrushSize((heightLandscape * percent) / heightPortrait)
+                                Log.d(
+                                    "changePaint",
+                                    "changePaint updateBrushSize2 ${(heightLandscape * percent) / heightPortrait}"
+                                )
+                            } else
+                                editor_draw_canvas.updateBrushSize(percent)
                         } else {
                             heightPortrait = editor_draw_canvas.measuredHeight
                             editor_draw_canvas.viewTreeObserver.removeOnGlobalLayoutListener(
@@ -862,11 +874,14 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
             val orientation = resources.configuration.orientation
             if (Configuration.ORIENTATION_LANDSCAPE == orientation) {
                 heightLandscape = editor_draw_canvas.measuredHeight
-                editor_draw_canvas.updateBrushSize((heightLandscape * percent) / heightPortrait)
-                Log.d(
-                    "changePaint",
-                    "changePaint updateBrushSize2 ${(heightLandscape * percent) / heightPortrait}"
-                )
+                if (heightPortrait > 0) {
+                    editor_draw_canvas.updateBrushSize((heightLandscape * percent) / heightPortrait)
+                    Log.d(
+                        "changePaint",
+                        "changePaint updateBrushSize2 ${(heightLandscape * percent) / heightPortrait}"
+                    )
+                }else
+                    editor_draw_canvas.updateBrushSize(percent)
             } else {
                 heightPortrait = editor_draw_canvas.measuredHeight
                 editor_draw_canvas.updateBrushSize(percent)
@@ -1253,6 +1268,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
 }
 
 fun CropImageView.isCropAreaChanged(): Boolean {
-    return cropRect?.width() != wholeImageRect.width()
-        || cropRect?.height() != wholeImageRect.height()
+    return (cropRect?.width() != 0 && cropRect?.height() != 0)
+        && (cropRect?.width() != wholeImageRect.width()
+        || cropRect?.height() != wholeImageRect.height())
 }
