@@ -34,4 +34,9 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getInt(LAST_EDITOR_BRUSH_SIZE, 50)
         set(lastEditorBrushSize) = prefs.edit().putInt(LAST_EDITOR_BRUSH_SIZE, lastEditorBrushSize)
             .apply()
+
+    var crashReport:Boolean
+        get() = prefs.getBoolean(CRASH_REPORT_ENABLE, true)
+        set(isEnable) = prefs.edit().putBoolean(CRASH_REPORT_ENABLE, isEnable)
+            .apply()
 }
