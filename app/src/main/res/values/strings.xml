@@ -37,4 +37,8 @@
     <string name="keep_aspect_ratio">Keep aspect ratio</string>
     <string name="invalid_values">Please enter a valid resolution</string>
 
+    <string name="crash_dialog_description">Sorry, the application crashed. Please send a report to the developers.</string>
+    <string name="crash_dialog_title">Crash</string>
+    <string name="crash_dialog_comment">You can add a comment here:</string>
+
 </resources>
