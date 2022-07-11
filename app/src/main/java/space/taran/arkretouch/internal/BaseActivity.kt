@@ -12,6 +12,7 @@ import com.simplemobiletools.commons.extensions.*
 import com.simplemobiletools.commons.helpers.*
 import space.taran.arkretouch.R
 import java.util.regex.Pattern
+import space.taran.arkretouch.utils.Config
 
 open class BaseActivity: AppCompatActivity() {
 
@@ -232,5 +233,11 @@ open class BaseActivity: AppCompatActivity() {
             isPathOnSD(path) -> isSDAndroidDir(uri)
             else -> isInternalStorageAndroidDir(uri)
         }
+    }
+
+    fun onCrashReportingClick(
+        enabled: Boolean
+    ) {
+        Config.newInstance(context = this).crashReport = enabled
     }
 }

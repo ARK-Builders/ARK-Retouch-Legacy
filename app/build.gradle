@@ -14,6 +14,12 @@ android {
         targetSdk 29
         versionCode 1
         versionName "1.0"
+        def login = System.getenv("ACRA_LOGIN") ?: ""
+        def password = System.getenv("ACRA_PASS") ?: ""
+        def uri = System.getenv("ACRA_URI") ?: ""
+        buildConfigField "String", "ACRA_LOGIN", "\"$login\""
+        buildConfigField "String", "ACRA_PASS", "\"$password\""
+        buildConfigField "String", "ACRA_URI", "\"$uri\""
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -70,4 +76,9 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+
+    implementation "ch.acra:acra-http:5.9.3"
+    implementation "ch.acra:acra-dialog:5.9.3"
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1'
+
 }
