@@ -16,7 +16,6 @@
         android:requestLegacyExternalStorage="true"
         android:supportsRtl="true"
         android:name=".App"
-        android:hardwareAccelerated="false"
         android:theme="@style/Theme.Arkretouch"
         android:usesCleartextTraffic="true"
         tools:replace="android:label">
