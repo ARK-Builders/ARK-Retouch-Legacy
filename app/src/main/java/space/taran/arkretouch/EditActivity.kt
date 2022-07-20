@@ -839,11 +839,14 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                             editor_draw_canvas.viewTreeObserver.removeOnGlobalLayoutListener(
                                 this
                             )
-                            editor_draw_canvas.updateBrushSize((heightLandscape * percent) / heightPortrait)
-                            Log.d(
-                                "changePaint",
-                                "changePaint updateBrushSize2 ${(heightLandscape * percent) / heightPortrait}"
-                            )
+                            if (heightPortrait > 0) {
+                                editor_draw_canvas.updateBrushSize((heightLandscape * percent) / heightPortrait)
+                                Log.d(
+                                    "changePaint",
+                                    "changePaint updateBrushSize2 ${(heightLandscape * percent) / heightPortrait}"
+                                )
+                            } else
+                                editor_draw_canvas.updateBrushSize(percent)
                         } else {
                             heightPortrait = editor_draw_canvas.measuredHeight
                             editor_draw_canvas.viewTreeObserver.removeOnGlobalLayoutListener(
@@ -862,11 +865,14 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
             val orientation = resources.configuration.orientation
             if (Configuration.ORIENTATION_LANDSCAPE == orientation) {
                 heightLandscape = editor_draw_canvas.measuredHeight
-                editor_draw_canvas.updateBrushSize((heightLandscape * percent) / heightPortrait)
-                Log.d(
-                    "changePaint",
-                    "changePaint updateBrushSize2 ${(heightLandscape * percent) / heightPortrait}"
-                )
+                if (heightPortrait > 0) {
+                    editor_draw_canvas.updateBrushSize((heightLandscape * percent) / heightPortrait)
+                    Log.d(
+                        "changePaint",
+                        "changePaint updateBrushSize2 ${(heightLandscape * percent) / heightPortrait}"
+                    )
+                }else
+                    editor_draw_canvas.updateBrushSize(percent)
             } else {
                 heightPortrait = editor_draw_canvas.measuredHeight
                 editor_draw_canvas.updateBrushSize(percent)
