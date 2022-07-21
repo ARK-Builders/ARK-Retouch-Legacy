@@ -103,10 +103,13 @@ import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_wid
 import kotlinx.android.synthetic.main.bottom_editor_primary_actions.bottom_primary_crop_rotate
 import kotlinx.android.synthetic.main.bottom_editor_primary_actions.bottom_primary_draw
 import kotlinx.android.synthetic.main.bottom_editor_primary_actions.bottom_primary_filter
-import space.taran.arkretouch.dialog.FilePickerDialog
+import space.taran.arkfilepicker.ArkFilePickerConfig
+import space.taran.arkfilepicker.ArkFilePickerFragment
+import space.taran.arkfilepicker.ArkFilePickerMode
+import space.taran.arkfilepicker.onArkPathPicked
 import space.taran.arkretouch.dialog.OtherAspectRatioDialog
 import space.taran.arkretouch.dialog.ResizeDialog
-import space.taran.arkretouch.dialog.SaveAsDialog
+import space.taran.arkretouch.dialog.SaveAsDialogFragment
 import space.taran.arkretouch.filter.FilterItem
 import space.taran.arkretouch.filter.FilterThumbnailsManager
 import space.taran.arkretouch.filter.FiltersAdapter
@@ -316,8 +319,12 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         when (item.itemId) {
             R.id.open -> {
                 handlePermission(PERMISSION_WRITE_STORAGE) {
-                    FilePickerDialog(this) {
-                        initEditActivity(Uri.fromFile(File(it)))
+                    ArkFilePickerFragment
+                        .newInstance(getFilePickerConfig())
+                        .show(supportFragmentManager, null)
+
+                    supportFragmentManager.onArkPathPicked(this) {
+                        initEditActivity(Uri.fromFile(it.toFile()))
                     }
                 }
             }
@@ -570,12 +577,12 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
             }
             if (bitmap!=null){
                 if (saveUri.scheme == "file") {
-                    SaveAsDialog(this, savePath, saveUri.path!!, true) {
+                    SaveAsDialogFragment.newInstanceAndShow(this, savePath, saveUri.path!!, true) {
                         saveBitmapToFile(bitmap, it, true)
                     }
                 } else if (saveUri.scheme == "content") {
                     val filePathGetter = getNewFilePath()
-                    SaveAsDialog(
+                    SaveAsDialogFragment.newInstanceAndShow(
                         this,
                         savePath,
                         filePathGetter.first,
@@ -588,7 +595,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         } else {
             val currentFilter = getFiltersAdapter()?.getCurrentFilter() ?: return
             val filePathGetter = getNewFilePath()
-            SaveAsDialog(
+            SaveAsDialogFragment.newInstanceAndShow(
                 this,
                 savePath,
                 filePathGetter.first,
@@ -1140,12 +1147,12 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                         finish()
                     }
                 } else if (saveUri.scheme == "file") {
-                    SaveAsDialog(this, savePath, saveUri.path!!, true) {
+                    SaveAsDialogFragment.newInstanceAndShow(this, savePath, saveUri.path!!, true) {
                         saveBitmapToFile(bitmap, it, true)
                     }
                 } else if (saveUri.scheme == "content") {
                     val filePathGetter = getNewFilePath()
-                    SaveAsDialog(
+                    SaveAsDialogFragment.newInstanceAndShow(
                         this,
                         savePath,
                         filePathGetter.first,
@@ -1258,6 +1265,11 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
             finish()
         }
     }
+
+    private fun getFilePickerConfig() = ArkFilePickerConfig(
+        mode = ArkFilePickerMode.FILE,
+        titleStringId = R.string.pick_image
+    )
 
     private fun Activity.openEditor(path: String, forceChooser: Boolean = false) {
         val newPath = path.removePrefix("file://")
