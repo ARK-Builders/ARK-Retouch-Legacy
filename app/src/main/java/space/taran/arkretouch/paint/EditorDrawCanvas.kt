@@ -202,21 +202,22 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     }
 
     fun getCropImage(): Bitmap? {
-        val left = rectNew!!.left
-        val top = rectNew!!.top
-        val rectWidth = rectNew!!.width()
-        val rectHeight = rectNew!!.height()
-        var bitmap = getBitmap()
-        bitmap = bitmap?.let {
-            Bitmap.createBitmap(
-                it,
-                left,
-                top,
-                rectWidth,
-                rectHeight
-            )
-        }
-        return bitmap
+        val bitmap = getBitmap()
+        return rectNew?.let { rect ->
+            val left = rect.left
+            val top = rect.top
+            val rectWidth = rect.width()
+            val rectHeight = rect.height()
+            bitmap?.let {
+                Bitmap.createBitmap(
+                    it,
+                    left,
+                    top,
+                    rectWidth,
+                    rectHeight
+                )
+            }
+        } ?: bitmap
     }
 
     fun isCanvasChanged(): Boolean {

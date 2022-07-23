@@ -575,7 +575,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                 saveUri =
                     Uri.fromFile(File("$internalStoragePath/${getCurrentFormattedDateTime()}.jpg"))
             }
-            if (bitmap!=null){
+            if (bitmap != null) {
                 if (saveUri.scheme == "file") {
                     SaveAsDialogFragment.newInstanceAndShow(this, savePath, saveUri.path!!, true) {
                         saveBitmapToFile(bitmap, it, true)
