@@ -122,6 +122,8 @@ import space.taran.arkretouch.utils.ASPECT_RATIO_OTHER
 import space.taran.arkretouch.utils.ASPECT_RATIO_SIXTEEN_NINE
 import space.taran.arkretouch.utils.Config
 import space.taran.arkretouch.utils.copyNonDimensionAttributesTo
+import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_alpha
+import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_alpha_tv
 
 class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
 
@@ -269,6 +271,11 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
             getAdjustedPrimaryColor(),
             config.backgroundColor
         )
+        bottom_draw_alpha.setColors(
+            config.textColor,
+            getAdjustedPrimaryColor(),
+            config.backgroundColor
+        )
     }
 
     override fun onStop() {
@@ -280,9 +287,9 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
 
     override fun onBackPressed() {
         if ((crop_image_view.isVisible() && crop_image_view.isCropAreaChanged())
-                || (editor_draw_canvas.isVisible() && editor_draw_canvas.isCanvasChanged())
-                || (default_image_view.isVisible() && filterInitialBitmap != default_image_view.drawable.toBitmap())
-        ){
+            || (editor_draw_canvas.isVisible() && editor_draw_canvas.isCanvasChanged())
+            || (default_image_view.isVisible() && filterInitialBitmap != default_image_view.drawable.toBitmap())
+        ) {
             val builder: AlertDialog.Builder = AlertDialog.Builder(this)
             builder.setCancelable(false)
             builder.setMessage("Do you want to save the changes?")
@@ -299,7 +306,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
             }
             val alert: AlertDialog = builder.create()
             alert.show()
-        }else
+        } else
             super.onBackPressed()
     }
 
@@ -815,10 +822,13 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         updateDrawColor(config.lastEditorDrawColor)
         bottom_draw_width.progress = config.lastEditorBrushSize
         updateBrushSize(config.lastEditorBrushSize)
+        bottom_draw_alpha.progress = config.lastEditorColorAlpha
+        updateColorAlpha(config.lastEditorColorAlpha)
 
         bottom_draw_color_clickable.setOnClickListener {
             ColorPickerDialog(this, drawColor) { wasPositivePressed, color ->
                 if (wasPositivePressed) {
+                    updateColorAlpha(alpha = 255)
                     updateDrawColor(color)
                 }
             }
@@ -828,10 +838,19 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
             config.lastEditorBrushSize = it
             updateBrushSize(it)
         }
-
+        bottom_draw_alpha.onSeekBarChangeListener {
+            config.lastEditorColorAlpha = it
+            updateColorAlpha(it)
+        }
         bottom_draw_undo.setOnClickListener {
             editor_draw_canvas.undo()
         }
+    }
+
+    private fun updateColorAlpha(alpha: Int) {
+        bottom_draw_alpha_tv.text =
+            String.format("%s%% Alpha", alpha.div(255f).times(100).toInt())
+        editor_draw_canvas.updateAlpha(alpha)
     }
 
     private fun updateBrushSize(percent: Int) {
@@ -878,7 +897,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
                         "changePaint",
                         "changePaint updateBrushSize2 ${(heightLandscape * percent) / heightPortrait}"
                     )
-                }else
+                } else
                     editor_draw_canvas.updateBrushSize(percent)
             } else {
                 heightPortrait = editor_draw_canvas.measuredHeight

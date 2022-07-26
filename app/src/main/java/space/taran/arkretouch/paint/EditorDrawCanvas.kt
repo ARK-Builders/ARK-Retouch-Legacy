@@ -133,12 +133,17 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
 
         mPaths[mPath] = mPaintOptions
         mPath = Path()
-        mPaintOptions = PaintOptions(mPaintOptions.color, mPaintOptions.strokeWidth)
+        mPaintOptions = PaintOptions(
+            color = mPaintOptions.color,
+            alpha = mPaintOptions.alpha,
+            strokeWidth = mPaintOptions.strokeWidth
+        )
     }
 
     private fun changePaint(paintOptions: PaintOptions) {
         mPaint.color = paintOptions.color
         mPaint.strokeWidth = paintOptions.strokeWidth
+        mPaint.alpha = paintOptions.alpha
     }
 
     fun updateColor(newColor: Int) {
@@ -165,7 +170,7 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     }
 
     fun getBitmap(): Bitmap? {
-        if(backgroundBitmap==null){
+        if (backgroundBitmap == null) {
             return null
         }
         val rect = this.rectNew
@@ -214,5 +219,9 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
 
     fun isCanvasChanged(): Boolean {
         return mPaths.isNotEmpty()
+    }
+
+    fun updateAlpha(alpha: Int) {
+        mPaintOptions.alpha = alpha
     }
 }

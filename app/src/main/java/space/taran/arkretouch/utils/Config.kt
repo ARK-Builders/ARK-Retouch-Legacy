@@ -39,4 +39,9 @@ class Config(context: Context) : BaseConfig(context) {
         get() = prefs.getBoolean(CRASH_REPORT_ENABLE, true)
         set(isEnable) = prefs.edit().putBoolean(CRASH_REPORT_ENABLE, isEnable)
             .apply()
+
+    var lastEditorColorAlpha:Int
+        get() = prefs.getInt(LAST_EDITOR_COLOR_ALPHA,255)
+        set(alpha) = prefs.edit().putInt(LAST_EDITOR_COLOR_ALPHA, alpha)
+            .apply()
 }
