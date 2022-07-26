@@ -130,6 +130,8 @@ import space.taran.arkretouch.utils.ASPECT_RATIO_OTHER
 import space.taran.arkretouch.utils.ASPECT_RATIO_SIXTEEN_NINE
 import space.taran.arkretouch.utils.Config
 import space.taran.arkretouch.utils.copyNonDimensionAttributesTo
+import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_alpha
+import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_alpha_tv
 
 class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
 
