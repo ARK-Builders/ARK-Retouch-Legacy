@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_edit_holder"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/bottomRelativeEditor"
         android:layout_alignParentTop="true"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
         android:background="@color/non_drawable_area">
         <ImageView
             android:id="@+id/default_image_view"
@@ -22,9 +22,9 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="gone"
+            tools:visibility="visible"
             app:cropBackgroundColor="@color/crop_image_view_background"
-            app:cropInitialCropWindowPaddingRatio="0"
-            tools:visibility="visible" />
+            app:cropInitialCropWindowPaddingRatio="0" />
 
         <space.taran.arkretouch.paint.EditorDrawCanvas
             android:id="@+id/editor_draw_canvas"
@@ -33,16 +33,16 @@
             android:layout_gravity="center"
             android:background="@android:color/transparent"
             android:visibility="gone"
-            tools:visibility="visible" />
+            tools:visibility="visible"/>
     </FrameLayout>
 
     <RelativeLayout
         android:id="@+id/bottomRelativeEditor"
         android:layout_width="match_parent"
         android:layout_height="@dimen/bottom_editor_actions_shadow_height"
+        android:layout_alignParentBottom="true"
         android:visibility="gone"
-        tools:visibility="visible"
-        android:layout_alignParentBottom="true">
+        tools:visibility="visible">
 
         <RelativeLayout
             android:id="@+id/bottom_editor_actions_background"
@@ -54,7 +54,8 @@
 
         <include
             android:id="@+id/bottom_editor_primary_actions"
-            layout="@layout/bottom_editor_primary_actions" />
+            layout="@layout/bottom_editor_primary_actions"
+            tools:visibility="visible" />
 
         <include
             android:id="@+id/bottom_aspect_ratios"
@@ -73,6 +74,7 @@
             android:layout_above="@+id/bottom_editor_primary_actions"
             android:visibility="gone"
 
+
             />
 
         <include
@@ -82,7 +84,9 @@
             android:layout_height="wrap_content"
             android:layout_above="@+id/bottom_editor_primary_actions"
             android:visibility="gone"
-            tools:visibility="visible" />
+            tools:visibility="visible"
+
+            />
 
         <include
             android:id="@+id/bottom_editor_draw_actions"
@@ -90,16 +94,25 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_above="@+id/bottom_editor_primary_actions"
-            android:visibility="gone" />
+            android:visibility="gone"
+
+            />
     </RelativeLayout>
 
-    <RelativeLayout
+    <ImageView
         android:id="@+id/bottomButtonEditorDisable"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/bottom_editor_actions_shadow_height"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_gravity="end"
+        android:layout_margin="@dimen/normal_margin"
         android:clickable="true"
         android:focusable="true"
+        android:rotation="90"
+        android:src="@drawable/ic_arrow_left_vector"
         android:visibility="gone"
-        android:background="@color/non_drawable_area"
-        android:layout_alignParentBottom="true"/>
+        tools:visibility="visible"
+        app:tint="@color/black" />
+
 </RelativeLayout>
