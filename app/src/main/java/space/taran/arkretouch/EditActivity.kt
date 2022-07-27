@@ -537,10 +537,14 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
             .fitCenter()
 
         try {
-            val updatedBitmap = bitmap
-                ?: Glide.with(applicationContext)
+            val updatedBitmap = Glide.with(applicationContext)
                     .asBitmap()
-                    .load(uri)
+                    .apply {
+                        if (bitmap != null)
+                            load(bitmap)
+                        else
+                            load(uri)
+                    }
                     .apply(options)
                     .into(editor_draw_canvas.width, editor_draw_canvas.height).get()
             runOnUiThread {
@@ -1290,6 +1294,6 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
 }
 
 fun CropImageView.isCropAreaChanged(): Boolean {
-    return cropRect?.width() != wholeImageRect.width()
-        || cropRect?.height() != wholeImageRect.height()
+    return (cropRect?.width() != 0 || cropRect?.height() != 0) && (cropRect?.width() != wholeImageRect.width()
+        || cropRect?.height() != wholeImageRect.height())
 }
