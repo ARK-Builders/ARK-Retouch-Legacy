@@ -133,7 +133,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
             System.loadLibrary("NativeImageProcessor")
         }
     }
-    lateinit var menu: Menu
+    private var menu: Menu? = null
     private var heightPortrait: Int = 0
     private var heightLandscape: Int = 0
     private var rect: Rect? = null
@@ -313,7 +313,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_editor, menu)
-        this.menu =menu
+        this.menu = menu
         // disable the + icon if app open from other intent
         if (intent.data != null) {
             menu.findItem(R.id.open).isVisible = false
@@ -928,7 +928,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
         } else if (editor_draw_canvas.isInvisible() && currPrimaryAction == PRIMARY_ACTION_DRAW) {
             loadDrawCanvas()
         }
-        menu.findItem(R.id.undo).isVisible = currPrimaryAction == PRIMARY_ACTION_DRAW && editor_draw_canvas.isCanvasChanged()
+        menu?.findItem(R.id.undo)?.isVisible = currPrimaryAction == PRIMARY_ACTION_DRAW && editor_draw_canvas.isCanvasChanged()
 
         arrayOf(bottom_primary_filter, bottom_primary_crop_rotate, bottom_primary_draw).forEach {
             it.applyColorFilter(Color.WHITE)
@@ -1297,7 +1297,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
     private val Context.config: Config get() = Config.newInstance(applicationContext)
 
     override fun onDrawHistoryChanged(isDraw: Boolean) {
-        menu.findItem(R.id.undo).isVisible = isDraw
+        menu?.findItem(R.id.undo)?.isVisible = isDraw
     }
 }
 
