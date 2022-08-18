@@ -6,11 +6,10 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PointF
 import android.graphics.Rect
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
-import android.view.ScaleGestureDetector
 import android.view.View
 import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat
@@ -42,34 +41,17 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
         strokeWidth = 5f
         isAntiAlias = true
     }
-    private var mScaleDetector: ScaleGestureDetector? = null
-    private var mScaleFactor = 1f
+
     private val MIN_ZOOM = 1.0f
     private val MAX_ZOOM = 4.0f
-
-    inner class ScaleListener : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-
-        override fun onScale(scaleDetector: ScaleGestureDetector): Boolean {
-            mScaleFactor *= scaleDetector.scaleFactor
-            mScaleFactor =
-                if (mScaleFactor < 1) MIN_ZOOM else mScaleFactor // prevent our view from becoming too small //
-
-            mScaleFactor =
-                ((mScaleFactor * 100).toInt()).toFloat() / 100 // Change precision to help with jitter when user just rests their fingers //
-            if (mScaleFactor < MIN_ZOOM) {
-                mScaleFactor = MIN_ZOOM
-            } else if (mScaleFactor > MAX_ZOOM) {
-                mScaleFactor = MAX_ZOOM
-            }
-            Log.d("onScale", "onScale ${scaleDetector.scaleFactor}")
-            scaleX = mScaleFactor
-            scaleY = mScaleFactor
-            return true
-        }
-    }
+    private val NONE = 0
+    private val DRAG = 1
+    private val ZOOM = 2
+    private var mode: Int = NONE
+    private var oldDist = 1f
+    private val mid = PointF()
 
     init {
-        mScaleDetector = ScaleGestureDetector(context, ScaleListener())
         mColor = ContextCompat.getColor(context, R.color.color_primary)
         mPaint.apply {
             color = mColor
@@ -119,12 +101,8 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
-        // Let the ScaleGestureDetector inspect all events.
-        mScaleDetector?.onTouchEvent(event)
-
         val x = event.x
         val y = event.y
-
         when (event.action and MotionEvent.ACTION_MASK) {
             MotionEvent.ACTION_DOWN -> {
                 mWasMultitouch = false
@@ -132,17 +110,46 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
                 mStartY = y
                 actionDown(x, y)
             }
+            MotionEvent.ACTION_POINTER_UP -> mode = NONE
             MotionEvent.ACTION_MOVE -> {
                 if (event.pointerCount == 1 && !mWasMultitouch) {
                     actionMove(x, y)
+                } else if (mode == ZOOM && event.pointerCount == 2) {
+                    val newDist1 = spacing(event)
+                    if (newDist1 > 10f) {
+                        var scale = newDist1 / oldDist * scaleX
+                        if (scale > MAX_ZOOM) scale =
+                            MAX_ZOOM else if (scale < MIN_ZOOM) scale = MIN_ZOOM
+                        scaleX = scale
+                        scaleY = scale
+                    }
                 }
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> actionUp()
-            MotionEvent.ACTION_POINTER_DOWN -> mWasMultitouch = true
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                mWasMultitouch = true
+                oldDist = spacing(event)
+                if (oldDist > 10f) {
+                    midPoint(mid, event)
+                    mode = ZOOM
+                }
+            }
         }
 
         invalidate()
         return true
+    }
+
+    private fun midPoint(point: PointF, event: MotionEvent) {
+        val x = event.getX(0) + event.getX(1)
+        val y = event.getY(0) + event.getY(1)
+        point.set(x / 2, y / 2)
+    }
+
+    private fun spacing(event: MotionEvent): Float {
+        val x = event.getX(0) - event.getX(1)
+        val y = event.getY(0) - event.getY(1)
+        return Math.sqrt((x * x + y * y).toDouble()).toInt().toFloat()
     }
 
     private fun actionDown(x: Float, y: Float) {
@@ -193,6 +200,7 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
         mPaintOptions.strokeWidth =
             resources.getDimension(R.dimen.full_brush_size) * (newBrushSize / 100f)
     }
+
 
     fun updateBackgroundBitmap(bitmap: Bitmap) {
         backgroundBitmap = bitmap
