@@ -8,7 +8,9 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.View
 import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat
@@ -40,8 +42,34 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
         strokeWidth = 5f
         isAntiAlias = true
     }
+    private var mScaleDetector: ScaleGestureDetector? = null
+    private var mScaleFactor = 1f
+    private val MIN_ZOOM = 1.0f
+    private val MAX_ZOOM = 4.0f
+
+    inner class ScaleListener : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+
+        override fun onScale(scaleDetector: ScaleGestureDetector): Boolean {
+            mScaleFactor *= scaleDetector.scaleFactor
+            mScaleFactor =
+                if (mScaleFactor < 1) MIN_ZOOM else mScaleFactor // prevent our view from becoming too small //
+
+            mScaleFactor =
+                ((mScaleFactor * 100).toInt()).toFloat() / 100 // Change precision to help with jitter when user just rests their fingers //
+            if (mScaleFactor < MIN_ZOOM) {
+                mScaleFactor = MIN_ZOOM
+            } else if (mScaleFactor > MAX_ZOOM) {
+                mScaleFactor = MAX_ZOOM
+            }
+            Log.d("onScale", "onScale ${scaleDetector.scaleFactor}")
+            scaleX = mScaleFactor
+            scaleY = mScaleFactor
+            return true
+        }
+    }
 
     init {
+        mScaleDetector = ScaleGestureDetector(context, ScaleListener())
         mColor = ContextCompat.getColor(context, R.color.color_primary)
         mPaint.apply {
             color = mColor
@@ -74,15 +102,26 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
                 it.right.toFloat(),
                 it.bottom.toFloat(), mCropSelectionPaint
             )
-            canvas.clipOutRect(it.left.toFloat(), it.top.toFloat(),
+            canvas.clipOutRect(
+                it.left.toFloat(), it.top.toFloat(),
                 it.right.toFloat(),
-                it.bottom.toFloat())
-            canvas.drawColor(ResourcesCompat.getColor(resources,R.color.crop_image_view_background,resources.newTheme()))
+                it.bottom.toFloat()
+            )
+            canvas.drawColor(
+                ResourcesCompat.getColor(
+                    resources,
+                    R.color.crop_image_view_background,
+                    resources.newTheme()
+                )
+            )
         }
         canvas.restore()
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        // Let the ScaleGestureDetector inspect all events.
+        mScaleDetector?.onTouchEvent(event)
+
         val x = event.x
         val y = event.y
 
