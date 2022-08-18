@@ -289,7 +289,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
     override fun onBackPressed() {
         if ((crop_image_view.isVisible() && crop_image_view.isCropAreaChanged())
             || (editor_draw_canvas.isVisible() && editor_draw_canvas.isCanvasChanged())
-            || (default_image_view.isVisible() && filterInitialBitmap != default_image_view.drawable.toBitmap())
+            || (default_image_view.isVisible() && filterInitialBitmap != default_image_view.drawable?.toBitmap())
         ) {
             val builder: AlertDialog.Builder = AlertDialog.Builder(this)
             builder.setCancelable(false)
