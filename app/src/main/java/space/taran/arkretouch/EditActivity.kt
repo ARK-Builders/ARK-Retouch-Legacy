@@ -98,7 +98,6 @@ import kotlinx.android.synthetic.main.bottom_editor_crop_rotate_actions.bottom_r
 import kotlinx.android.synthetic.main.bottom_editor_crop_rotate_actions.bottom_rotate
 import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_color
 import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_color_clickable
-import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_undo
 import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_width
 import kotlinx.android.synthetic.main.bottom_editor_primary_actions.bottom_primary_crop_rotate
 import kotlinx.android.synthetic.main.bottom_editor_primary_actions.bottom_primary_draw
@@ -124,15 +123,17 @@ import space.taran.arkretouch.utils.Config
 import space.taran.arkretouch.utils.copyNonDimensionAttributesTo
 import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_alpha
 import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_alpha_tv
+import space.taran.arkretouch.paint.EditorDrawCanvas
 
-class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
+class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
+    EditorDrawCanvas.OnDrawHistoryListener {
 
     companion object {
         init {
             System.loadLibrary("NativeImageProcessor")
         }
     }
-
+    private var menu: Menu? = null
     private var heightPortrait: Int = 0
     private var heightLandscape: Int = 0
     private var rect: Rect? = null
@@ -289,7 +290,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     override fun onBackPressed() {
         if ((crop_image_view.isVisible() && crop_image_view.isCropAreaChanged())
             || (editor_draw_canvas.isVisible() && editor_draw_canvas.isCanvasChanged())
-            || (default_image_view.isVisible() && filterInitialBitmap != default_image_view.drawable.toBitmap())
+            || (default_image_view.isVisible() && filterInitialBitmap != default_image_view.drawable?.toBitmap())
         ) {
             val builder: AlertDialog.Builder = AlertDialog.Builder(this)
             builder.setCancelable(false)
@@ -313,7 +314,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_editor, menu)
-
+        this.menu = menu
         // disable the + icon if app open from other intent
         if (intent.data != null) {
             menu.findItem(R.id.open).isVisible = false
@@ -324,6 +325,10 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            R.id.undo -> {
+                editor_draw_canvas.undo()
+                item.isVisible = editor_draw_canvas.isCanvasChanged()
+            }
             R.id.open -> {
                 handlePermission(PERMISSION_WRITE_STORAGE) {
                     ArkFilePickerFragment
@@ -521,6 +526,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         default_image_view.beGone()
         crop_image_view.beGone()
         editor_draw_canvas.beVisible()
+        editor_draw_canvas.setOnDrawHistoryListener(onDrawHistoryListener = this)
         if ((!wasDrawCanvasPositioned && uri != null) || bitmap != null) {
             wasDrawCanvasPositioned = true
             editor_draw_canvas.onGlobalLayout {
@@ -855,9 +861,6 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
             config.lastEditorColorAlpha = it
             updateColorAlpha(it)
         }
-        bottom_draw_undo.setOnClickListener {
-            editor_draw_canvas.undo()
-        }
     }
 
     private fun updateColorAlpha(alpha: Int) {
@@ -934,6 +937,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         } else if (editor_draw_canvas.isInvisible() && currPrimaryAction == PRIMARY_ACTION_DRAW) {
             loadDrawCanvas()
         }
+        menu?.findItem(R.id.undo)?.isVisible = currPrimaryAction == PRIMARY_ACTION_DRAW && editor_draw_canvas.isCanvasChanged()
 
         arrayOf(bottom_primary_filter, bottom_primary_crop_rotate, bottom_primary_draw).forEach {
             it.applyColorFilter(Color.WHITE)
@@ -1300,6 +1304,10 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
     }
 
     private val Context.config: Config get() = Config.newInstance(applicationContext)
+
+    override fun onDrawHistoryChanged(isDraw: Boolean) {
+        menu?.findItem(R.id.undo)?.isVisible = isDraw
+    }
 }
 
 fun CropImageView.isCropAreaChanged(): Boolean {
