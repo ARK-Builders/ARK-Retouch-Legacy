@@ -17,6 +17,7 @@ import space.taran.arkretouch.R
 
 class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     View(context, attrs) {
+    private var onDrawHistoryListener: OnDrawHistoryListener? = null
     private var rectNew: Rect? = null
     private var offsetY: Float = 0f
     private var mCurX = 0f
@@ -51,6 +52,14 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
             strokeWidth = 40f
             isAntiAlias = true
         }
+    }
+
+    interface OnDrawHistoryListener {
+        fun onDrawHistoryChanged(isDraw: Boolean)
+    }
+
+    fun setOnDrawHistoryListener(onDrawHistoryListener: OnDrawHistoryListener) {
+        this.onDrawHistoryListener = onDrawHistoryListener
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -138,6 +147,8 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
             alpha = mPaintOptions.alpha,
             strokeWidth = mPaintOptions.strokeWidth
         )
+
+        onDrawHistoryListener?.onDrawHistoryChanged(isCanvasChanged())
     }
 
     private fun changePaint(paintOptions: PaintOptions) {

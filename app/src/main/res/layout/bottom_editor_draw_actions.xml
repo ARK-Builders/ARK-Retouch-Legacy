@@ -55,8 +55,9 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/change_color"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintRight_toLeftOf="@+id/bottom_draw_undo"
-        app:layout_constraintTop_toTopOf="@+id/bottom_draw_color" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/bottom_draw_color"
+        android:layout_marginEnd="@dimen/big_margin"/>
 
     <ImageView
         android:id="@+id/bottom_draw_color"
@@ -68,18 +69,5 @@
         android:src="@drawable/circle_background"
         app:layout_constraintEnd_toEndOf="@+id/bottom_draw_color_clickable"
         app:layout_constraintTop_toTopOf="@+id/bottom_draw_width" />
-
-    <ImageView
-        android:id="@+id/bottom_draw_undo"
-        android:layout_width="@dimen/bottom_editor_color_picker_size"
-        android:layout_height="@dimen/bottom_editor_color_picker_size"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:clickable="false"
-        android:contentDescription="@string/undo"
-        android:padding="@dimen/medium_margin"
-        android:src="@drawable/ic_undo_vector"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/bottom_draw_color_clickable" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
