@@ -50,7 +50,7 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     private var mode: Int = NONE
     private var oldDist = 1f
     private val mid = PointF()
-
+    private val start = PointF()
     init {
         mColor = ContextCompat.getColor(context, R.color.color_primary)
         mPaint.apply {
@@ -109,6 +109,7 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
                 mStartX = x
                 mStartY = y
                 actionDown(x, y)
+                start.set(event.x, event.y)
             }
             MotionEvent.ACTION_POINTER_UP -> mode = NONE
             MotionEvent.ACTION_MOVE -> {
@@ -123,6 +124,9 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
                         scaleX = scale
                         scaleY = scale
                     }
+                } else if (event.pointerCount == 3) {
+                    translationX += (event.x - start.x)
+                    translationY += (event.y - start.y)
                 }
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> actionUp()

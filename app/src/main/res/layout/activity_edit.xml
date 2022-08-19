@@ -5,6 +5,7 @@
     android:id="@+id/activity_edit_holder"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -12,6 +13,7 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:background="@color/non_drawable_area">
+
         <ImageView
             android:id="@+id/default_image_view"
             android:layout_width="match_parent"
@@ -22,9 +24,9 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="gone"
-            tools:visibility="visible"
             app:cropBackgroundColor="@color/crop_image_view_background"
-            app:cropInitialCropWindowPaddingRatio="0" />
+            app:cropInitialCropWindowPaddingRatio="0"
+            tools:visibility="visible" />
 
         <space.taran.arkretouch.paint.EditorDrawCanvas
             android:id="@+id/editor_draw_canvas"
@@ -33,7 +35,7 @@
             android:layout_gravity="center"
             android:background="@android:color/transparent"
             android:visibility="gone"
-            tools:visibility="visible"/>
+            tools:visibility="visible" />
     </FrameLayout>
 
     <RelativeLayout
@@ -112,7 +114,7 @@
         android:rotation="90"
         android:src="@drawable/ic_arrow_left_vector"
         android:visibility="gone"
-        tools:visibility="visible"
-        app:tint="@color/black" />
+        app:tint="@color/black"
+        tools:visibility="visible" />
 
 </RelativeLayout>
