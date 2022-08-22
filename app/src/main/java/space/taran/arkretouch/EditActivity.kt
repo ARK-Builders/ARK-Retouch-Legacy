@@ -524,6 +524,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
         crop_image_view.beGone()
         editor_draw_canvas.beVisible()
         editor_draw_canvas.setOnDrawHistoryListener(onDrawHistoryListener = this)
+        editor_draw_canvas.setOnDrawHistoryListener(onDrawHistoryListener = this)
         editor_draw_canvas.translationX = 0f
         editor_draw_canvas.translationY = 0f
         editor_draw_canvas.scaleX = 1f
