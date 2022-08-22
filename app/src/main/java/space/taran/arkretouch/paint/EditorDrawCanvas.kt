@@ -123,15 +123,18 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
                             MAX_ZOOM else if (scale < MIN_ZOOM) scale = MIN_ZOOM
                         scaleX = scale
                         scaleY = scale
+                        translationX += (event.x - start.x)
+                        translationY += (event.y - start.y)
                     }
-                } else if (event.pointerCount == 3) {
-                    translationX += (event.x - start.x)
-                    translationY += (event.y - start.y)
                 }
             }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> actionUp()
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (!mWasMultitouch)
+                    actionUp()
+            }
             MotionEvent.ACTION_POINTER_DOWN -> {
                 mWasMultitouch = true
+                resetPath()
                 oldDist = spacing(event)
                 if (oldDist > 10f) {
                     midPoint(mid, event)
@@ -142,6 +145,14 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
 
         invalidate()
         return true
+    }
+
+    private fun resetPath() {
+        mPath.reset()
+        mCurX = 0f
+        mCurY = 0f
+        mStartX = 0f
+        mStartY = 0f
     }
 
     private fun midPoint(point: PointF, event: MotionEvent) {

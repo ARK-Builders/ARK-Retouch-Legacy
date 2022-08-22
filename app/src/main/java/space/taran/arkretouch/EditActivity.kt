@@ -493,6 +493,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
             } else {
                 setImageUriAsync(uri)
             }
+            resetCropRect()
             isAutoZoomEnabled = false
             if (rectNew != null) {
                 cropRect = rectNew
@@ -517,6 +518,10 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener {
         default_image_view.beGone()
         crop_image_view.beGone()
         editor_draw_canvas.beVisible()
+        editor_draw_canvas.translationX = 0f
+        editor_draw_canvas.translationY = 0f
+        editor_draw_canvas.scaleX = 1f
+        editor_draw_canvas.scaleY = 1f
         if ((!wasDrawCanvasPositioned && uri != null) || bitmap != null) {
             wasDrawCanvasPositioned = true
             editor_draw_canvas.onGlobalLayout {
