@@ -6,6 +6,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.PointF
 import android.graphics.Rect
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -42,6 +43,15 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
         isAntiAlias = true
     }
 
+    private val MIN_ZOOM = 1.0f
+    private val MAX_ZOOM = 4.0f
+    private val NONE = 0
+    private val DRAG = 1
+    private val ZOOM = 2
+    private var mode: Int = NONE
+    private var oldDist = 1f
+    private val mid = PointF()
+    private val start = PointF()
     init {
         mColor = ContextCompat.getColor(context, R.color.color_primary)
         mPaint.apply {
@@ -102,25 +112,68 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val x = event.x
         val y = event.y
-
         when (event.action and MotionEvent.ACTION_MASK) {
             MotionEvent.ACTION_DOWN -> {
                 mWasMultitouch = false
                 mStartX = x
                 mStartY = y
                 actionDown(x, y)
+                start.set(event.x, event.y)
             }
+            MotionEvent.ACTION_POINTER_UP -> mode = NONE
             MotionEvent.ACTION_MOVE -> {
                 if (event.pointerCount == 1 && !mWasMultitouch) {
                     actionMove(x, y)
+                } else if (mode == ZOOM && event.pointerCount == 2) {
+                    val newDist1 = spacing(event)
+                    if (newDist1 > 10f) {
+                        var scale = newDist1 / oldDist * scaleX
+                        if (scale > MAX_ZOOM) scale =
+                            MAX_ZOOM else if (scale < MIN_ZOOM) scale = MIN_ZOOM
+                        scaleX = scale
+                        scaleY = scale
+                        translationX += (event.x - start.x)
+                        translationY += (event.y - start.y)
+                    }
                 }
             }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> actionUp()
-            MotionEvent.ACTION_POINTER_DOWN -> mWasMultitouch = true
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                if (!mWasMultitouch)
+                    actionUp()
+            }
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                mWasMultitouch = true
+                resetPath()
+                oldDist = spacing(event)
+                if (oldDist > 10f) {
+                    midPoint(mid, event)
+                    mode = ZOOM
+                }
+            }
         }
 
         invalidate()
         return true
+    }
+
+    private fun resetPath() {
+        mPath.reset()
+        mCurX = 0f
+        mCurY = 0f
+        mStartX = 0f
+        mStartY = 0f
+    }
+
+    private fun midPoint(point: PointF, event: MotionEvent) {
+        val x = event.getX(0) + event.getX(1)
+        val y = event.getY(0) + event.getY(1)
+        point.set(x / 2, y / 2)
+    }
+
+    private fun spacing(event: MotionEvent): Float {
+        val x = event.getX(0) - event.getX(1)
+        val y = event.getY(0) - event.getY(1)
+        return Math.sqrt((x * x + y * y).toDouble()).toInt().toFloat()
     }
 
     private fun actionDown(x: Float, y: Float) {
@@ -173,6 +226,7 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
         mPaintOptions.strokeWidth =
             resources.getDimension(R.dimen.full_brush_size) * (newBrushSize / 100f)
     }
+
 
     fun updateBackgroundBitmap(bitmap: Bitmap) {
         backgroundBitmap = bitmap
