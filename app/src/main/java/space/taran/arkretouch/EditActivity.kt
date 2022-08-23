@@ -528,6 +528,7 @@ class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
             } else {
                 setImageUriAsync(uri)
             }
+            resetCropRect()
             isAutoZoomEnabled = false
             if (rectNew != null) {
                 cropRect = rectNew
