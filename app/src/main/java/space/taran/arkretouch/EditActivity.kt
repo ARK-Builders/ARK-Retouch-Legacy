@@ -353,6 +353,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
     }
 
     private fun initEditActivity(imageUri: Uri) {
+        filterInitialBitmap = null
         uri = imageUri
         originalUri = uri
         rect = null
