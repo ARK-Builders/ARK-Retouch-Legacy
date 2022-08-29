@@ -1,9 +1,11 @@
 package space.taran.arkretouch.paint
 
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.PointF
@@ -14,6 +16,8 @@ import android.view.View
 import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import space.taran.arkretouch.R
 
 class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
@@ -27,7 +31,8 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     private var mStartY = 0f
     private var mColor = 0
     private var mWasMultitouch = false
-
+    private var scaleForMaintainDrawing = 0f
+    private val matrixForScalingDrawingData = Matrix()
     private var mPaths = LinkedHashMap<Path, PaintOptions>()
     private var mPaint = Paint()
     private var mPath = Path()
@@ -46,7 +51,6 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     private val MIN_ZOOM = 1.0f
     private val MAX_ZOOM = 4.0f
     private val NONE = 0
-    private val DRAG = 1
     private val ZOOM = 2
     private var mode: Int = NONE
     private var oldDist = 1f
@@ -242,6 +246,43 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
         requestLayout()
     }
 
+    suspend fun saveDrawingOnOriginalImage(bitmap: Bitmap): Bitmap? {
+        return withContext(Dispatchers.IO) {
+            backgroundBitmap?.let {
+                val scale =
+                    bitmap.height.toFloat() / it.height.toFloat()
+                val canvas = Canvas(bitmap)
+                for ((key, value) in mPaths.toMutableMap()) {
+                    value.strokeWidth = value.strokeWidth * scale
+                    matrixForScalingDrawingData.setScale(scale, scale)
+                    key.transform(matrixForScalingDrawingData)
+                    changePaint(value)
+                    canvas.drawPath(key, mPaint)
+                }
+                changePaint(mPaintOptions)
+                canvas.drawPath(mPath, mPaint)
+                bitmap
+            }
+        }
+    }
+
+    suspend fun getCropImage(originalImage: Bitmap): Bitmap? {
+        return withContext(Dispatchers.IO) {
+            saveDrawingOnOriginalImage(originalImage)?.let { bitmap ->
+                backgroundBitmap?.let {
+                    val scale = originalImage.height.toFloat() / it.height.toFloat()
+                    rectNew?.let { rect ->
+                        val left = (rect.left * scale).toInt()
+                        val top = (rect.top * scale).toInt()
+                        val rectWidth = (rect.width() * scale).toInt()
+                        val rectHeight = (rect.height() * scale).toInt()
+                        Bitmap.createBitmap(bitmap,left,top,rectWidth,rectHeight)
+                    } ?: bitmap
+                }
+            }
+        }
+    }
+
     fun getBitmap(): Bitmap? {
         if (backgroundBitmap == null) {
             return null
@@ -271,25 +312,6 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
         invalidate()
     }
 
-    fun getCropImage(): Bitmap? {
-        val bitmap = getBitmap()
-        return rectNew?.let { rect ->
-            val left = rect.left
-            val top = rect.top
-            val rectWidth = rect.width()
-            val rectHeight = rect.height()
-            bitmap?.let {
-                Bitmap.createBitmap(
-                    it,
-                    left,
-                    top,
-                    rectWidth,
-                    rectHeight
-                )
-            }
-        } ?: bitmap
-    }
-
     fun isCanvasChanged(): Boolean {
         return mPaths.isNotEmpty()
     }
@@ -307,5 +329,30 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
 
     fun updateAlpha(alpha: Int) {
         mPaintOptions.alpha = alpha
+    }
+
+    fun setDrawingScale(scale: Float) {
+        scaleForMaintainDrawing = scale
+        if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            for ((key, point) in mPaths) {
+                point.strokeWidth = point.strokeWidth * scaleForMaintainDrawing
+                matrixForScalingDrawingData.setScale(scaleForMaintainDrawing, scaleForMaintainDrawing)
+                key.transform(matrixForScalingDrawingData)
+            }
+        } else if (resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+            for ((key, point) in mPaths) {
+                point.strokeWidth = point.strokeWidth / scaleForMaintainDrawing
+                matrixForScalingDrawingData.setScale(1f / scaleForMaintainDrawing, 1f / scaleForMaintainDrawing)
+                key.transform(matrixForScalingDrawingData)
+            }
+        }
+    }
+
+    fun getDrawingPaths(): LinkedHashMap<Path, PaintOptions> {
+        return mPaths
+    }
+
+    fun setDrawingPaths(imageEditDetails: LinkedHashMap<Path, PaintOptions>) {
+        this.mPaths = imageEditDetails
     }
 }

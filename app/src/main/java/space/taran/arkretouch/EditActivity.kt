@@ -9,6 +9,7 @@ import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
 import android.graphics.Color
+import android.graphics.Path
 import android.graphics.Point
 import android.graphics.Rect
 import android.net.Uri
@@ -20,11 +21,10 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.view.ViewTreeObserver
-import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.widget.RelativeLayout
 import androidx.core.graphics.drawable.toBitmap
 import androidx.exifinterface.media.ExifInterface
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
@@ -69,7 +69,6 @@ import com.simplemobiletools.commons.models.FileDirItem
 import com.theartofdev.edmodo.cropper.CropImageView
 import com.zomato.photofilters.FilterPack
 import com.zomato.photofilters.imageprocessors.Filter
-import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
@@ -84,7 +83,10 @@ import kotlinx.android.synthetic.main.activity_edit.bottom_editor_filter_actions
 import kotlinx.android.synthetic.main.activity_edit.bottom_editor_primary_actions
 import kotlinx.android.synthetic.main.activity_edit.crop_image_view
 import kotlinx.android.synthetic.main.activity_edit.default_image_view
+import kotlinx.android.synthetic.main.activity_edit.detect_image_size_for_device
+import kotlinx.android.synthetic.main.activity_edit.disable_all_layouts
 import kotlinx.android.synthetic.main.activity_edit.editor_draw_canvas
+import kotlinx.android.synthetic.main.activity_edit.progress_circular
 import kotlinx.android.synthetic.main.bottom_actions_aspect_ratio.bottom_aspect_ratio_four_three
 import kotlinx.android.synthetic.main.bottom_actions_aspect_ratio.bottom_aspect_ratio_free
 import kotlinx.android.synthetic.main.bottom_actions_aspect_ratio.bottom_aspect_ratio_one_one
@@ -96,12 +98,17 @@ import kotlinx.android.synthetic.main.bottom_editor_crop_rotate_actions.bottom_f
 import kotlinx.android.synthetic.main.bottom_editor_crop_rotate_actions.bottom_flip_vertically
 import kotlinx.android.synthetic.main.bottom_editor_crop_rotate_actions.bottom_resize
 import kotlinx.android.synthetic.main.bottom_editor_crop_rotate_actions.bottom_rotate
+import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_alpha
+import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_alpha_tv
 import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_color
 import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_color_clickable
 import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_width
 import kotlinx.android.synthetic.main.bottom_editor_primary_actions.bottom_primary_crop_rotate
 import kotlinx.android.synthetic.main.bottom_editor_primary_actions.bottom_primary_draw
 import kotlinx.android.synthetic.main.bottom_editor_primary_actions.bottom_primary_filter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import space.taran.arkfilepicker.ArkFilePickerConfig
 import space.taran.arkfilepicker.ArkFilePickerFragment
 import space.taran.arkfilepicker.ArkFilePickerMode
@@ -114,6 +121,8 @@ import space.taran.arkretouch.filter.FilterThumbnailsManager
 import space.taran.arkretouch.filter.FiltersAdapter
 import space.taran.arkretouch.internal.BaseActivity
 import space.taran.arkretouch.internal.getFileOutputStream
+import space.taran.arkretouch.paint.EditorDrawCanvas
+import space.taran.arkretouch.paint.PaintOptions
 import space.taran.arkretouch.utils.ASPECT_RATIO_FOUR_THREE
 import space.taran.arkretouch.utils.ASPECT_RATIO_FREE
 import space.taran.arkretouch.utils.ASPECT_RATIO_ONE_ONE
@@ -121,18 +130,15 @@ import space.taran.arkretouch.utils.ASPECT_RATIO_OTHER
 import space.taran.arkretouch.utils.ASPECT_RATIO_SIXTEEN_NINE
 import space.taran.arkretouch.utils.Config
 import space.taran.arkretouch.utils.copyNonDimensionAttributesTo
-import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_alpha
-import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_alpha_tv
-import space.taran.arkretouch.paint.EditorDrawCanvas
 
-class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
-    EditorDrawCanvas.OnDrawHistoryListener {
+class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
 
     companion object {
         init {
             System.loadLibrary("NativeImageProcessor")
         }
     }
+    private var originalImage: Bitmap? = null
     private var menu: Menu? = null
     private var heightPortrait: Int = 0
     private var heightLandscape: Int = 0
@@ -212,8 +218,10 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
                 }
             }
             if (editor_draw_canvas.isVisible()) {
-                // b.putParcelable("imageEdit", editor_draw_canvas.getBitmap())
-                b.putSerializable("imageEditDetails", editor_draw_canvas.getDrawingDetails())
+                b.putSerializable(
+                    "imageEditPaths",
+                    editor_draw_canvas.getDrawingPaths()
+                )
                 b.putInt(
                     "imageEditHeightPortrait",
                     heightPortrait
@@ -228,9 +236,11 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
     }
 
     override fun onRestoreInstanceState(b: Bundle) {
+        invalidateOptionsMenu()
         //you need to handle NullPointerException here.
         (b.getParcelable<Parcelable>("imageUri") as Uri?)?.let { imageUri ->
             uri = imageUri
+            setOriginalImage()
         }
         (b.getParcelable<Parcelable>("imageDefault") as Bitmap?)?.let { imageDefault ->
             loadDefaultImageView(imageDefault)
@@ -256,11 +266,12 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
             setupCropRotateActionButtons()
             setupAspectRatioButtons()
         }
-        (b.getSerializable("imageEditDetails") as LinkedHashMap<*, *>?)?.let {
-            loadDrawCanvas(imageEditDetails = it)
-            bottomDrawClicked()
+        (b.getSerializable("imageEditPaths") as LinkedHashMap<*, *>?)?.let { imageEditDetails ->
             heightPortrait = b.getInt("imageEditHeightPortrait")
             heightLandscape = b.getInt("imageEditHeightLandscape")
+            editor_draw_canvas.setDrawingPaths(imageEditDetails as LinkedHashMap<Path, PaintOptions>)
+            loadDrawCanvas()
+            bottomDrawClicked()
         }
         setupPrimaryActionButtons()
     }
@@ -318,9 +329,15 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
         // disable the + icon if app open from other intent
         if (intent.data != null) {
             menu.findItem(R.id.open).isVisible = false
+        } else {
+            checkAndShowUndoMenuButton()
         }
-
         return true
+    }
+
+    private fun checkAndShowUndoMenuButton() {
+        menu?.findItem(R.id.undo)?.isVisible =
+            currPrimaryAction == PRIMARY_ACTION_DRAW && editor_draw_canvas.isCanvasChanged()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -362,7 +379,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
             finish()
             return
         }
-
+        setOriginalImage()
         if (intent.extras?.containsKey(REAL_FILE_PATH) == true) {
             val realPath = intent.extras!!.getString(REAL_FILE_PATH)
             uri = when {
@@ -409,11 +426,21 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
             }
 
             lastOtherAspectRatio =
-                Pair(config.lastEditorCropOtherAspectRatioX, config.lastEditorCropOtherAspectRatioY)
+                Pair(
+                    config.lastEditorCropOtherAspectRatioX,
+                    config.lastEditorCropOtherAspectRatioY
+                )
         }
         updateAspectRatio(config.lastEditorCropAspectRatio)
         crop_image_view.guidelines = CropImageView.Guidelines.ON
         bottom_aspect_ratios.beVisible()
+    }
+
+    private fun setOriginalImage() {
+        lifecycleScope.launch(Dispatchers.IO) {
+            originalImage =
+                Glide.with(this@EditActivity).asBitmap().load(uri).submit().get()
+        }
     }
 
     private fun loadDefaultImageView(bitmap: Bitmap? = null) {
@@ -494,13 +521,13 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
         editor_draw_canvas.beInvisible()
         crop_image_view.apply {
             beVisible()
-            setOnCropImageCompleteListener(this@EditActivity)
+            resetCropRect()
+            rotateImage(0)
             if (bitmap != null) {
                 setImageBitmap(bitmap)
             } else {
                 setImageUriAsync(uri)
             }
-            resetCropRect()
             isAutoZoomEnabled = false
             if (rectNew != null) {
                 cropRect = rectNew
@@ -520,10 +547,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
         }
     }
 
-    private fun loadDrawCanvas(
-        bitmap: Bitmap? = null,
-        imageEditDetails: java.util.LinkedHashMap<*, *>? = null
-    ) {
+    private fun loadDrawCanvas(bitmap: Bitmap? = null) {
         bottomRelativeEditor.beVisible()
         default_image_view.beGone()
         crop_image_view.beGone()
@@ -537,19 +561,15 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
             wasDrawCanvasPositioned = true
             editor_draw_canvas.onGlobalLayout {
                 ensureBackgroundThread {
-                    fillCanvasBackground(bitmap, imageEditDetails)
+                    fillCanvasBackground(bitmap)
                 }
             }
         } else {
             editor_draw_canvas.drawRect(if (crop_image_view.isCropAreaChanged()) crop_image_view.cropRect else null)
-            editor_draw_canvas.updateDrawingDetails(imageEditDetails)
         }
     }
 
-    private fun fillCanvasBackground(
-        bitmap: Bitmap? = null,
-        imageEditDetails: java.util.LinkedHashMap<*, *>? = null
-    ) {
+    private fun fillCanvasBackground(bitmap: Bitmap? = null) {
         val options = RequestOptions()
             .format(DecodeFormat.PREFER_ARGB_8888)
             .skipMemoryCache(true)
@@ -558,24 +578,34 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
 
         try {
             val updatedBitmap = Glide.with(applicationContext)
-                    .asBitmap()
-                    .apply {
-                        if (bitmap != null)
-                            load(bitmap)
-                        else
-                            load(uri)
-                    }
-                    .apply(options)
-                    .submit(editor_draw_canvas.width, editor_draw_canvas.height).get()
+                .asBitmap()
+                .apply {
+                    if (bitmap != null)
+                        load(bitmap)
+                    else
+                        load(uri)
+                }
+                .apply(options)
+                .into(
+                    detect_image_size_for_device.width,
+                    detect_image_size_for_device.height
+                ).get()
             runOnUiThread {
                 editor_draw_canvas.apply {
-                    updateBackgroundBitmap(updatedBitmap)
                     layoutParams.width = updatedBitmap.width
                     layoutParams.height = updatedBitmap.height
+                    if (isPortrait()) {
+                        heightPortrait = layoutParams.height
+                    } else {
+                        heightLandscape = layoutParams.height
+                    }
+                    if (heightPortrait > 0 && heightLandscape > 0)
+                        setDrawingScale(heightLandscape.toFloat() / heightPortrait.toFloat())
+                    updateBackgroundBitmap(updatedBitmap)
                     //y = (height - updatedBitmap.height) / 2f
                     requestLayout()
-                    editor_draw_canvas.drawRect(if (crop_image_view.isCropAreaChanged()) crop_image_view.cropRect else null)
-                    editor_draw_canvas.updateDrawingDetails(imageEditDetails)
+                    drawRect(if (crop_image_view.isCropAreaChanged()) crop_image_view.cropRect else null)
+                    this@EditActivity.updateBrushSize(config.lastEditorBrushSize)
                 }
             }
         } catch (e: Exception) {
@@ -586,40 +616,11 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
     @TargetApi(Build.VERSION_CODES.N)
     private fun saveImage() {
         setOldExif()
-
-        if (crop_image_view.isVisible()) {
-            crop_image_view.getCroppedImageAsync()
-        } else if (editor_draw_canvas.isVisible()) {
-            val bitmap = if (!crop_image_view.isCropAreaChanged())
-                editor_draw_canvas.getBitmap()
-            else
-                editor_draw_canvas.getCropImage()
-            if (!::saveUri.isInitialized) {
-                saveUri =
-                    Uri.fromFile(File("$internalStoragePath/${getCurrentFormattedDateTime()}.jpg"))
-            }
-            if (bitmap != null) {
-                if (saveUri.scheme == "file") {
-                    SaveAsDialogFragment.newInstanceAndShow(this, savePath, saveUri.path!!, true) {
-                        saveBitmapToFile(bitmap, it, true)
-                    }
-                } else if (saveUri.scheme == "content") {
-                    val filePathGetter = getNewFilePath()
-                    SaveAsDialogFragment.newInstanceAndShow(
-                        this,
-                        savePath,
-                        filePathGetter.first,
-                        filePathGetter.second
-                    ) {
-                        saveBitmapToFile(bitmap, it, true)
-                    }
-                }
-            }
-        } else {
+        if (default_image_view.isVisible()) {
             val currentFilter = getFiltersAdapter()?.getCurrentFilter() ?: return
             val filePathGetter = getNewFilePath()
             SaveAsDialogFragment.newInstanceAndShow(
-                this,
+                this@EditActivity,
                 savePath,
                 filePathGetter.first,
                 filePathGetter.second
@@ -634,17 +635,79 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
 
                 ensureBackgroundThread {
                     try {
-                        val originalBitmap =
-                            Glide.with(applicationContext).asBitmap().load(uri)
-                                .submit(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
-                                .get()
-                        currentFilter.filter.processFilter(originalBitmap)
-                        saveBitmapToFile(originalBitmap, it, false)
+                        currentFilter.filter.processFilter(originalImage)
+                        saveBitmapToFile(originalImage!!, it, false)
                     } catch (e: OutOfMemoryError) {
                         toast(R.string.out_of_memory_error)
                     }
                 }
             }
+        } else {
+            if (!::saveUri.isInitialized) {
+                saveUri =
+                    Uri.fromFile(File("$internalStoragePath/${getCurrentFormattedDateTime()}.jpg"))
+            }
+            if (saveUri.scheme == "file") {
+                SaveAsDialogFragment.newInstanceAndShow(
+                    this@EditActivity,
+                    savePath,
+                    saveUri.path!!,
+                    true
+                ) {
+                    saveImageFromCropOrDrawMode(it)
+                }
+            } else if (saveUri.scheme == "content") {
+                val filePathGetter = getNewFilePath()
+                SaveAsDialogFragment.newInstanceAndShow(
+                    this@EditActivity,
+                    savePath,
+                    filePathGetter.first,
+                    filePathGetter.second
+                ) {
+                    saveImageFromCropOrDrawMode(it)
+                }
+            }
+        }
+    }
+
+    private fun saveImageFromCropOrDrawMode(it: String) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            showProgressBar()
+            val bitmap = if (crop_image_view.isVisible()) {
+                cropImage(originalImage!!, crop_image_view.cropRect)
+            } else if (editor_draw_canvas.isVisible()) {
+                if (!crop_image_view.isCropAreaChanged()) {
+                    editor_draw_canvas.saveDrawingOnOriginalImage(originalImage!!)
+                } else
+                    editor_draw_canvas.getCropImage(originalImage!!)
+            } else null
+            if (bitmap != null) {
+                saveBitmapToFile(bitmap, it, true)
+                hideProgressBar()
+            }
+        }
+    }
+
+    private fun showProgressBar() {
+        progress_circular.beVisible()
+        disable_all_layouts.beVisible()
+    }
+
+    private fun hideProgressBar() {
+        progress_circular.beGone()
+        disable_all_layouts.beGone()
+    }
+
+    private suspend fun cropImage(originalImage: Bitmap, cropRect: Rect): Bitmap? {
+        return withContext(lifecycleScope.coroutineContext + Dispatchers.IO) {
+            val scale =
+                originalImage.height.toFloat() / crop_image_view.wholeImageRect.height()
+                    .toFloat()
+            val left = (cropRect.left * scale).toInt()
+            val top = (cropRect.top * scale).toInt()
+            val rectWidth = (cropRect.width() * scale).toInt()
+            val rectHeight = (cropRect.height() * scale).toInt()
+            Bitmap.createBitmap(originalImage, left, top, rectWidth, rectHeight)
         }
     }
 
@@ -875,60 +938,26 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
         editor_draw_canvas.updateAlpha(alpha)
     }
 
+    private fun isPortrait(): Boolean {
+        return resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+    }
+
     private fun updateBrushSize(percent: Int) {
-        if (editor_draw_canvas.measuredHeight == 0) {
-            val vto: ViewTreeObserver = editor_draw_canvas.viewTreeObserver
-            vto.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
-                override fun onGlobalLayout() {
-                    if (editor_draw_canvas.measuredHeight > 0) {
-                        val orientation = resources.configuration.orientation
-                        if (Configuration.ORIENTATION_LANDSCAPE == orientation) {
-                            heightLandscape = editor_draw_canvas.measuredHeight
-                            editor_draw_canvas.viewTreeObserver.removeOnGlobalLayoutListener(
-                                this
-                            )
-                            if (heightPortrait > 0) {
-                                editor_draw_canvas.updateBrushSize((heightLandscape * percent) / heightPortrait)
-                                Log.d(
-                                    "changePaint",
-                                    "changePaint updateBrushSize2 ${(heightLandscape * percent) / heightPortrait}"
-                                )
-                            } else
-                                editor_draw_canvas.updateBrushSize(percent)
-                        } else {
-                            heightPortrait = editor_draw_canvas.measuredHeight
-                            editor_draw_canvas.viewTreeObserver.removeOnGlobalLayoutListener(
-                                this
-                            )
-                            editor_draw_canvas.updateBrushSize(percent)
-                            Log.d(
-                                "changePaint",
-                                "changePaint updateBrushSize2 $percent"
-                            )
-                        }
-                    }
-                }
-            })
+        if (isPortrait()) {
+            editor_draw_canvas.updateBrushSize(percent)
+            Log.d(
+                "changePaint",
+                "changePaint updateBrushSize2 $percent"
+            )
         } else {
-            val orientation = resources.configuration.orientation
-            if (Configuration.ORIENTATION_LANDSCAPE == orientation) {
-                heightLandscape = editor_draw_canvas.measuredHeight
-                if (heightPortrait > 0) {
-                    editor_draw_canvas.updateBrushSize((heightLandscape * percent) / heightPortrait)
-                    Log.d(
-                        "changePaint",
-                        "changePaint updateBrushSize2 ${(heightLandscape * percent) / heightPortrait}"
-                    )
-                } else
-                    editor_draw_canvas.updateBrushSize(percent)
-            } else {
-                heightPortrait = editor_draw_canvas.measuredHeight
-                editor_draw_canvas.updateBrushSize(percent)
+            if (heightPortrait > 0) {
+                editor_draw_canvas.updateBrushSize((heightLandscape * percent) / heightPortrait)
                 Log.d(
                     "changePaint",
-                    "changePaint updateBrushSize2 $percent"
+                    "changePaint updateBrushSize2 ${(heightLandscape * percent) / heightPortrait}"
                 )
-            }
+            } else
+                editor_draw_canvas.updateBrushSize(percent)
         }
         val scale = max(0.03f, percent / 100f)
         bottom_draw_color.scaleX = scale
@@ -943,7 +972,7 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
         } else if (editor_draw_canvas.isInvisible() && currPrimaryAction == PRIMARY_ACTION_DRAW) {
             loadDrawCanvas()
         }
-        menu?.findItem(R.id.undo)?.isVisible = currPrimaryAction == PRIMARY_ACTION_DRAW && editor_draw_canvas.isCanvasChanged()
+        checkAndShowUndoMenuButton()
 
         arrayOf(bottom_primary_filter, bottom_primary_crop_rotate, bottom_primary_draw).forEach {
             it.applyColorFilter(Color.WHITE)
@@ -1140,69 +1169,6 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
         }
     }
 
-    override fun onCropImageComplete(
-        view: CropImageView,
-        result: CropImageView.CropResult
-    ) {
-        if (result.error == null) {
-            setOldExif()
-
-            afterCroppedSaveClickBitmap = result.bitmap
-            afterCroppedSaveClickBitmap?.let { bitmap ->
-                if (isSharingBitmap) {
-                    isSharingBitmap = false
-                    shareBitmap(bitmap)
-                    return
-                }
-
-                if (isCropIntent) {
-                    if (saveUri.scheme == "file") {
-                        saveBitmapToFile(bitmap, saveUri.path!!, true)
-                    } else {
-                        var inputStream: InputStream? = null
-                        var outputStream: OutputStream? = null
-                        try {
-                            val stream = ByteArrayOutputStream()
-                            bitmap.compress(CompressFormat.JPEG, 100, stream)
-                            inputStream = ByteArrayInputStream(stream.toByteArray())
-                            outputStream = contentResolver.openOutputStream(saveUri)
-                            inputStream.copyTo(outputStream!!)
-                        } finally {
-                            inputStream?.close()
-                            outputStream?.close()
-                        }
-
-                        Intent().apply {
-                            data = saveUri
-                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                            setResult(RESULT_OK, this)
-                        }
-                        finish()
-                    }
-                } else if (saveUri.scheme == "file") {
-                    SaveAsDialogFragment.newInstanceAndShow(this, savePath, saveUri.path!!, true) {
-                        saveBitmapToFile(bitmap, it, true)
-                    }
-                } else if (saveUri.scheme == "content") {
-                    val filePathGetter = getNewFilePath()
-                    SaveAsDialogFragment.newInstanceAndShow(
-                        this,
-                        savePath,
-                        filePathGetter.first,
-                        filePathGetter.second
-                    ) {
-                        saveBitmapToFile(bitmap, it, true)
-                    }
-                } else {
-                    toast(R.string.unknown_file_location)
-                }
-            }
-
-        } else {
-            toast("${getString(R.string.image_editing_failed)}: ${result.error.message}")
-        }
-    }
-
     private fun getNewFilePath(): Pair<String, Boolean> {
         var newPath = applicationContext.getRealPathFromURI(saveUri) ?: ""
         if (newPath.startsWith("/mnt/")) {
@@ -1265,9 +1231,9 @@ class EditActivity : BaseActivity(), CropImageView.OnCropImageCompleteListener,
 
         if (resizeWidth > 0 && resizeHeight > 0) {
             val resized = Bitmap.createScaledBitmap(bitmap, resizeWidth, resizeHeight, false)
-            resized.compress(file.absolutePath.getCompressionFormat(), 90, out)
+            resized.compress(file.absolutePath.getCompressionFormat(), 100, out)
         } else {
-            bitmap.compress(file.absolutePath.getCompressionFormat(), 90, out)
+            bitmap.compress(file.absolutePath.getCompressionFormat(), 100, out)
         }
 
         try {
