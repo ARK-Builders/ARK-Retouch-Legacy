@@ -356,3 +356,4 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
         this.mPaths = imageEditDetails
     }
 }
+
