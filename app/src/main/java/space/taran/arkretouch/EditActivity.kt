@@ -673,8 +673,8 @@ class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
     }
 
     private fun saveImageFromCropOrDrawMode(it: String) {
+        showProgressBar()
         lifecycleScope.launch(Dispatchers.IO) {
-            showProgressBar()
             val bitmap = if (crop_image_view.isVisible()) {
                 cropImage(originalImage!!, crop_image_view.cropRect)
             } else if (editor_draw_canvas.isVisible()) {
@@ -685,7 +685,9 @@ class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
             } else null
             if (bitmap != null) {
                 saveBitmapToFile(bitmap, it, true)
-                hideProgressBar()
+                lifecycleScope.launch(Dispatchers.Main) {
+                    hideProgressBar()
+                }
             }
         }
     }
