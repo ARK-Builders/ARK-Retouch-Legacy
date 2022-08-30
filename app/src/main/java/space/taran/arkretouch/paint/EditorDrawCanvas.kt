@@ -16,6 +16,7 @@ import android.view.View
 import android.widget.RelativeLayout
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
+import kotlinx.android.synthetic.main.activity_edit.editor_draw_canvas
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import space.taran.arkretouch.R
@@ -56,6 +57,7 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     private var oldDist = 1f
     private val mid = PointF()
     private val start = PointF()
+    private var isSavingFile = false
     init {
         mColor = ContextCompat.getColor(context, R.color.color_primary)
         mPaint.apply {
@@ -77,6 +79,9 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     }
 
     override fun onDraw(canvas: Canvas) {
+        // to avoid unnecessary update in canvas
+        // while saving drawing detail on original image.
+        if (isSavingFile) return
         super.onDraw(canvas)
         canvas.save()
 
@@ -249,6 +254,7 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     suspend fun saveDrawingOnOriginalImage(bitmap: Bitmap): Bitmap? {
         return withContext(Dispatchers.IO) {
             backgroundBitmap?.let {
+                setSavingFile(true)
                 val scale =
                     bitmap.height.toFloat() / it.height.toFloat()
                 val canvas = Canvas(bitmap)
@@ -354,6 +360,10 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
 
     fun setDrawingPaths(imageEditDetails: LinkedHashMap<Path, PaintOptions>) {
         this.mPaths = imageEditDetails
+    }
+
+    private fun setSavingFile(isSavingFile: Boolean) {
+        this.isSavingFile = isSavingFile
     }
 }
 

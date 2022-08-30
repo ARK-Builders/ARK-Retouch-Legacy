@@ -234,6 +234,7 @@ class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
                 )
             }
             b.putParcelable("imageUri", uri)
+            b.putParcelable("saveUri", saveUri)
         }
     }
 
@@ -242,6 +243,9 @@ class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
         //you need to handle NullPointerException here.
         (b.getParcelable<Parcelable>("imageUri") as Uri?)?.let { imageUri ->
             uri = imageUri
+            b.getParcelable<Uri>("saveUri")?.let {
+                saveUri = it
+            }
             setOriginalImage()
         }
         (b.getParcelable<Parcelable>("imageDefault") as Bitmap?)?.let { imageDefault ->
