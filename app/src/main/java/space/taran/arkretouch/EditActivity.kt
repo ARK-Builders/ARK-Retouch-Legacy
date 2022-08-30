@@ -335,9 +335,8 @@ class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
         // disable the + icon if app open from other intent
         if (intent.data != null) {
             menu.findItem(R.id.open).isVisible = false
-        } else {
-            checkAndShowUndoMenuButton()
         }
+        checkAndShowUndoMenuButton()
         return true
     }
 
