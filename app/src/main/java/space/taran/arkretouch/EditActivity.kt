@@ -175,7 +175,6 @@ class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
     private var currAspectRatio = ASPECT_RATIO_FREE
     private var isCropIntent = false
     private var isEditingWithThirdParty = false
-    private var isSharingBitmap = false
     private var wasDrawCanvasPositioned = false
     private var oldExif: ExifInterface? = null
     private var filterInitialBitmap: Bitmap? = null
@@ -676,7 +675,7 @@ class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
         }
     }
 
-    private fun saveImageFromCropOrDrawMode(it: String) {
+    private fun saveImageFromCropOrDrawMode(path: String) {
         showProgressBar()
         lifecycleScope.launch(Dispatchers.IO) {
             val bitmap = if (crop_image_view.isVisible()) {
@@ -688,7 +687,7 @@ class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
                     editor_draw_canvas.getCropImage(originalImage!!)
             } else null
             if (bitmap != null) {
-                saveBitmapToFile(bitmap, it, true)
+                saveBitmapToFile(bitmap, path, true)
                 lifecycleScope.launch(Dispatchers.Main) {
                     hideProgressBar()
                 }
@@ -734,25 +733,38 @@ class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
     }
 
     private fun shareImage() {
-        ensureBackgroundThread {
+        lifecycleScope.launch(Dispatchers.IO) {
             when {
                 default_image_view.isVisible() -> {
                     val currentFilter = getFiltersAdapter()?.getCurrentFilter()
-                        ?: return@ensureBackgroundThread
-                    val originalBitmap =
-                        Glide.with(applicationContext).asBitmap().load(uri)
-                            .submit(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL).get()
-                    currentFilter.filter.processFilter(originalBitmap)
-                    shareBitmap(originalBitmap)
+                        ?: return@launch
+                    currentFilter.filter.processFilter(originalImage)
+                    originalImage?.let { shareBitmap(it) }
                 }
                 crop_image_view.isVisible() -> {
-                    isSharingBitmap = true
-                    runOnUiThread {
-                        crop_image_view.getCroppedImageAsync()
+                    launch {  }
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        showProgressBar()
+                    }
+                    lifecycleScope.launch(Dispatchers.IO) {
+                        val bitmap = cropImage(originalImage!!, crop_image_view.cropRect)
+                        if (bitmap != null) {
+                            shareBitmap(bitmap)
+                        }
+                        lifecycleScope.launch(Dispatchers.Main) {
+                            hideProgressBar()
+                        }
                     }
                 }
-                editor_draw_canvas.isVisible() -> editor_draw_canvas.getBitmap()
-                    ?.let { shareBitmap(it) }
+                editor_draw_canvas.isVisible() -> {
+                    val bitmap = if (!crop_image_view.isCropAreaChanged()) {
+                        editor_draw_canvas.saveDrawingOnOriginalImage(originalImage!!)
+                    } else
+                        editor_draw_canvas.getCropImage(originalImage!!)
+                    if (bitmap !=null) {
+                        shareBitmap(bitmap)
+                    }
+                }
             }
         }
     }

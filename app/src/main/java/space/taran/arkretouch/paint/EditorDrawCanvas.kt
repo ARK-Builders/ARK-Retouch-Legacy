@@ -57,7 +57,6 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     private var oldDist = 1f
     private val mid = PointF()
     private val start = PointF()
-    private var isSavingFile = false
     init {
         mColor = ContextCompat.getColor(context, R.color.color_primary)
         mPaint.apply {
@@ -79,9 +78,6 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     }
 
     override fun onDraw(canvas: Canvas) {
-        // to avoid unnecessary update in canvas
-        // while saving drawing detail on original image.
-        if (isSavingFile) return
         super.onDraw(canvas)
         canvas.save()
 
@@ -254,19 +250,25 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     suspend fun saveDrawingOnOriginalImage(bitmap: Bitmap): Bitmap? {
         return withContext(Dispatchers.IO) {
             backgroundBitmap?.let {
-                setSavingFile(true)
-                val scale =
+                scaleForMaintainDrawing =
                     bitmap.height.toFloat() / it.height.toFloat()
                 val canvas = Canvas(bitmap)
                 for ((key, value) in mPaths.toMutableMap()) {
-                    value.strokeWidth = value.strokeWidth * scale
-                    matrixForScalingDrawingData.setScale(scale, scale)
+                    value.strokeWidth = value.strokeWidth * scaleForMaintainDrawing
+                    matrixForScalingDrawingData.setScale(scaleForMaintainDrawing, scaleForMaintainDrawing)
                     key.transform(matrixForScalingDrawingData)
                     changePaint(value)
                     canvas.drawPath(key, mPaint)
                 }
                 changePaint(mPaintOptions)
                 canvas.drawPath(mPath, mPaint)
+                // For not reflecting UI in canvas so drawing will be maintain.
+                for ((key, value) in mPaths.toMutableMap()) {
+                    value.strokeWidth = value.strokeWidth / scaleForMaintainDrawing
+                    matrixForScalingDrawingData.setScale(1 / scaleForMaintainDrawing, 1/ scaleForMaintainDrawing)
+                    key.transform(matrixForScalingDrawingData)
+                }
+                // end
                 bitmap
             }
         }
@@ -360,10 +362,6 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
 
     fun setDrawingPaths(imageEditDetails: LinkedHashMap<Path, PaintOptions>) {
         this.mPaths = imageEditDetails
-    }
-
-    private fun setSavingFile(isSavingFile: Boolean) {
-        this.isSavingFile = isSavingFile
     }
 }
 
