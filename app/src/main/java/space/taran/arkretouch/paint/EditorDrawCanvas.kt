@@ -57,8 +57,7 @@ class EditorDrawCanvas(context: Context, attrs: AttributeSet) :
     private var oldDist = 1f
     private val mid = PointF()
     private val start = PointF()
-    private var 
-    = false
+
     init {
         mColor = ContextCompat.getColor(context, R.color.color_primary)
         mPaint.apply {
