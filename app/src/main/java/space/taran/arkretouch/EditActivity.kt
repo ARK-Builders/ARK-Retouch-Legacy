@@ -132,6 +132,7 @@ import space.taran.arkretouch.utils.Config
 import space.taran.arkretouch.utils.copyNonDimensionAttributesTo
 import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_alpha
 import kotlinx.android.synthetic.main.bottom_editor_draw_actions.bottom_draw_alpha_tv
+import space.taran.arkretouch.utils.noCache
 
 class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
 
@@ -443,7 +444,12 @@ class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
     private fun setOriginalImage() {
         lifecycleScope.launch(Dispatchers.IO) {
             originalImage =
-                Glide.with(this@EditActivity).asBitmap().load(uri).submit().get()
+                Glide.with(this@EditActivity)
+                    .asBitmap()
+                    .noCache()
+                    .load(uri)
+                    .submit()
+                    .get()
         }
     }
 
@@ -453,12 +459,9 @@ class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
         crop_image_view.beGone()
         editor_draw_canvas.beInvisible()
 
-        val options = RequestOptions()
-            .skipMemoryCache(true)
-            .diskCacheStrategy(DiskCacheStrategy.NONE)
-
         Glide.with(this)
             .asBitmap()
+            .noCache()
             .apply {
                 if (bitmap != null) {
                     load(bitmap)
@@ -466,7 +469,6 @@ class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
                     load(uri)
                 }
             }
-            .apply(options)
             .listener(object : RequestListener<Bitmap> {
                 override fun onLoadFailed(
                     e: GlideException?,
@@ -584,6 +586,7 @@ class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
         try {
             val updatedBitmap = Glide.with(applicationContext)
                 .asBitmap()
+                .noCache()
                 .apply {
                     if (bitmap != null)
                         load(bitmap)
@@ -1018,6 +1021,7 @@ class EditActivity : BaseActivity(), EditorDrawCanvas.OnDrawHistoryListener {
                 val bitmap = try {
                     Glide.with(this)
                         .asBitmap()
+                        .noCache()
                         .load(uri).listener(object : RequestListener<Bitmap> {
                             override fun onLoadFailed(
                                 e: GlideException?,
