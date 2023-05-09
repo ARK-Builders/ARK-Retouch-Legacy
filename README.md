@@ -1,4 +1,8 @@
-"ARK Retouch" is a quick and simple graphical editor forked from editor module of "Simple Gallery" app.
+# ARK Retouch (Legacy)
+This Android app is a quick and simple graphical editor.
+
+The codebase is forked from editor module of "Simple Gallery" app.
+
 Copyright (C) 2022 ARK Builders, Simple Mobile Tools
 
 This program is free software: you can redistribute it and/or modify
